@@ -1,0 +1,140 @@
+{
+  "name": "sfdmu-all-purpose-migration",
+  "displayName": "SFDMU All-Purpose Migration",
+  "description": "Visual interface for configuring and executing SFDMU data migrations for any Salesforce objects",
+  "version": "0.1.0",
+  "publisher": "JackHuffman",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jack-huffman/SFDMU-All-Purpose-VSCode-Extension"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:sfdmu-all-purpose.openMigrationPanel",
+    "onView:sfdmuMigration"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "sfdmu-all-purpose.openMigrationPanel",
+        "title": "Open Migration Panel",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.openConfigFromTree",
+        "title": "Open Configuration",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.refreshConfigTree",
+        "title": "Refresh Configurations",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.createConfigFolder",
+        "title": "New Folder",
+        "category": "SFDMU",
+        "icon": "$(file-directory-create)"
+      },
+      {
+        "command": "sfdmu-all-purpose.createConfigInFolder",
+        "title": "New Configuration",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.deleteConfigFolder",
+        "title": "Delete Folder",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.deleteConfigFile",
+        "title": "Delete Configuration",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.renameConfigFile",
+        "title": "Rename",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.renameConfigFolder",
+        "title": "Rename",
+        "category": "SFDMU"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "sfdmuMigration",
+          "name": "SFDMU Migration",
+          "when": "true"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "sfdmu-all-purpose.createConfigFolder",
+          "when": "view == sfdmuMigration",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sfdmu-all-purpose.renameConfigFile",
+          "when": "view == sfdmuMigration && viewItem == sfdmuConfig",
+          "group": "1_rename"
+        },
+        {
+          "command": "sfdmu-all-purpose.deleteConfigFile",
+          "when": "view == sfdmuMigration && viewItem == sfdmuConfig",
+          "group": "3_delete"
+        },
+        {
+          "command": "sfdmu-all-purpose.renameConfigFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "1_rename"
+        },
+        {
+          "command": "sfdmu-all-purpose.createConfigFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "2_new"
+        },
+        {
+          "command": "sfdmu-all-purpose.createConfigInFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "2_new"
+        },
+        {
+          "command": "sfdmu-all-purpose.deleteConfigFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "3_delete"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-webview",
+    "copy-webview": "node scripts/copy-webview.js",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "package:pre-release": "vsce package --pre-release"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.44"
+  }
+}

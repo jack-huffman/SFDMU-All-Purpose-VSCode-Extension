@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFDMU Migration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <h1 id="config-name-header" class="config-name-header-editable" contenteditable="true" title="Click to rename configuration">SFDMU Migration</h1>
+        <div class="header-actions" id="header-actions" style="display: none;">
+            <div class="mode-toggle-switch-container">
+                <label class="mode-toggle-switch">
+                    <input type="checkbox" id="mode-toggle-switch">
+                    <span class="mode-toggle-slider">
+                        <span class="mode-toggle-label mode-toggle-label-left">Objects</span>
+                        <span class="mode-toggle-label mode-toggle-label-right">CPQ</span>
+                    </span>
+                </label>
+            </div>
+            <button id="save-config" class="btn-secondary btn-small" title="Save or update configuration">Save</button>
+        </div>
+    </div>
+    
+        <div class="main-container">
+        <!-- File Explorer Sidebar -->
+        <div class="explorer-sidebar">
+            <div class="explorer-header">
+                <h3>Configurations</h3>
+                <button id="create-folder-btn" class="icon-button-small" title="Create Folder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-folder-plus" viewBox="0 0 16 16">
+                        <path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z"/>
+                        <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="explorer-tree" id="explorer-tree">
+                <div class="explorer-loading">Loading...</div>
+            </div>
+            <div class="explorer-footer">
+                <button id="add-config-btn" class="btn-secondary explorer-add-config-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-file-earmark-plus" viewBox="0 0 16 16">
+                        <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5"/>
+                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                    </svg>
+                    <span>Add Configuration</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="main-content" id="main-content" style="display: none;">
+            <!-- Org Selection Header -->
+            <div class="org-selection-header">
+                <div class="org-selection-left">
+                    <div class="org-selection-item">
+                        <label>Source Org</label>
+                        <div class="org-select-wrapper">
+                            <select id="source-org-select" class="org-select">
+                                <option value="">Select org...</option>
+                            </select>
+                        </div>
+                        <div class="org-manual" id="source-org-manual" style="display: none;">
+                            <input type="text" id="source-org-username" placeholder="Username" class="text-input-small">
+                            <input type="text" id="source-org-instance-url" placeholder="Instance URL" class="text-input-small">
+                            <input type="password" id="source-org-access-token" placeholder="Access Token (optional)" class="text-input-small">
+                        </div>
+                    </div>
+                    
+                    <div class="org-arrow">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 16L12 10V22L20 16Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="org-selection-item">
+                        <div class="org-label-with-action">
+                            <label>Target Org</label>
+                            <button id="refresh-orgs" class="org-refresh-icon" title="Refresh Orgs">
+                                <span class="codicon codicon-refresh"></span>
+                            </button>
+                        </div>
+                        <div class="org-select-wrapper">
+                            <select id="target-org-select" class="org-select">
+                                <option value="">Select org...</option>
+                            </select>
+                        </div>
+                        <div class="org-manual" id="target-org-manual" style="display: none;">
+                            <input type="text" id="target-org-username" placeholder="Username" class="text-input-small">
+                            <input type="text" id="target-org-instance-url" placeholder="Instance URL" class="text-input-small">
+                            <input type="password" id="target-org-access-token" placeholder="Access Token (optional)" class="text-input-small">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="org-selection-right">
+                    <div class="dml-operation-control">
+                        <label>DML Operation</label>
+                        <select id="dml-operation" class="select-input">
+                            <option value="Upsert" selected>Upsert</option>
+                            <option value="Insert">Insert</option>
+                            <option value="Update">Update</option>
+                            <option value="Delete">Delete</option>
+                            <option value="DeleteHierarchy">DeleteHierarchy</option>
+                            <option value="DeleteSource">DeleteSource</option>
+                        </select>
+                    </div>
+                    <div class="config-button-wrapper">
+                        <button id="migration-config-button" class="icon-button" title="Configuration">
+                            <span class="codicon codicon-settings-gear"></span>
+                        </button>
+                    </div>
+                    <div class="migration-action-buttons-wrapper">
+                        <div class="migration-action-buttons">
+                            <button id="generate-files-icon" class="icon-button" title="Generate Migration File">
+                                <span class="codicon codicon-file-add"></span>
+                            </button>
+                            <button id="simulate-migration-icon" class="icon-button standard-mode-only" title="Simulate Migration">
+                                <span class="codicon codicon-debug-alt"></span>
+                            </button>
+                            <button id="run-migration-icon" class="icon-button icon-button-primary standard-mode-only" title="Run Migration">
+                                <span class="codicon codicon-run"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Migration Objects Panel -->
+            <div class="migration-objects-panel">
+                <div class="migration-objects-header">
+                    <h2 id="migration-objects-title">Migration Objects</h2>
+                    <button id="add-object" class="btn-secondary objects-mode-only">
+                        <span class="codicon codicon-add"></span>
+                        <span>Add Object</span>
+                    </button>
+                </div>
+                
+                
+                <!-- Migration Objects List -->
+                <div class="migration-objects-content">
+                    <!-- Standard Objects Mode -->
+                    <div id="objects-mode-container">
+                        <div id="migration-objects-list" class="migration-objects-list">
+                            <p class="info-text">No objects added yet. Click "Add Object" to get started.</p>
+                        </div>
+                    </div>
+
+                    <!-- CPQ Mode -->
+                    <div id="cpq-mode-container" class="cpq-mode-container" style="display: none;">
+                        <div id="cpq-run-phases-section" class="cpq-run-phases">
+                            <div id="cpq-individual-phases" class="individual-phases">
+                                <p class="info-text">
+                                    Click "Generate" in the header to create CPQ phase files, then run phases from here.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Getting Started Panel (shown when no configuration is loaded) -->
+        <div id="getting-started" class="getting-started">
+            <button id="getting-started-create-config" class="btn-primary getting-started-create-btn">
+                <span class="codicon codicon-new-file"></span>
+                <span>Create Configuration</span>
+            </button>
+            <div class="getting-started-content">
+                <h2>Getting Started with SFDMU Migrations</h2>
+                <p class="getting-started-text">
+                    Use this extension as a visual front-end for the <strong>SFDX Data Move Utility (SFDMU)</strong> to configure and run data migrations between Salesforce orgs.
+                </p>
+                <ol class="getting-started-steps">
+                    <li><strong>Create a configuration</strong> in the sidebar by adding a folder and configuration file.</li>
+                    <li><strong>Select your Source and Target orgs</strong> at the top of the page, or use the edit icons to enter connection details manually.</li>
+                    <li><strong>Add migration objects</strong>, choose the DML operation, and optionally define per-object fields and filters.</li>
+                    <li><strong>Generate and run</strong> the migration using the action buttons in the header.</li>
+                </ol>
+                <p class="getting-started-link">
+                    For full SFDMU documentation and examples, see
+                    <a href="https://help.sfdmu.com/get-started" target="_blank" rel="noopener noreferrer">SFDMU Get Started Guide</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Object Selection Modal -->
+    <div id="object-selection-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="object-modal-title">Add Objects</h3>
+                <div class="modal-tabs">
+                    <button id="tab-select-from-org" class="modal-tab active">Select from Org</button>
+                    <button id="tab-manual-entry" class="modal-tab">Manual Entry</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- Select from Org Tab -->
+                <div id="tab-content-select" class="tab-content active">
+                    <div class="object-selection-container">
+                        <div class="object-search">
+                            <input type="text" id="object-search-input" placeholder="Search objects..." class="text-input">
+                            <label class="checkbox-label">
+                            </label>
+                        </div>
+                        <div class="object-list-container">
+                            <div id="object-list-loading" class="info-text" style="display: none;">Loading objects...</div>
+                            <div id="object-list" class="object-list"></div>
+                        </div>
+                        <div class="object-selection-summary">
+                            <span id="selected-count">0 objects selected</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Manual Entry Tab -->
+                <div id="tab-content-manual" class="tab-content">
+                    <div class="manual-entry-container">
+                        <div class="manual-entry-form">
+                            <div class="form-group">
+                                <label for="manual-object-name">Object Name *</label>
+                                <input type="text" id="manual-object-name" class="text-input" placeholder="e.g., Account, CustomObject__c" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="manual-external-id">External ID *</label>
+                                <div class="external-id-input-group">
+                                    <input type="text" id="manual-external-id" class="text-input" placeholder="e.g., Name, Id, or composite: Field1;Field2" required>
+                                    <button id="manual-auto-detect" class="btn-secondary" type="button">Auto-detect</button>
+                                </div>
+                                <p class="help-text-small">Use semicolon (;) to separate fields for composite external IDs</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="manual-use-custom-query">
+                                    <span>Use custom SOQL query</span>
+                                </label>
+                            </div>
+                            <div class="form-group" id="manual-soql-group" style="display: none;">
+                                <label for="manual-soql-query">SOQL Query</label>
+                                <textarea id="manual-soql-query" class="text-input" rows="4" placeholder="SELECT Id, Name FROM ObjectName WHERE ..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="object-modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="object-modal-add" class="btn-primary" disabled>Add Object(s)</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Field Selection Modal -->
+    <div id="field-selection-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="field-modal-title">Select Fields</h3>
+            </div>
+            <div class="modal-body">
+                <div class="object-selection-container">
+                    <div class="object-search">
+                        <input type="text" id="field-search-input" placeholder="Search fields..." class="text-input">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="select-all-fields">
+                            <span>Select All</span>
+                        </label>
+                    </div>
+                    <div class="object-list-container">
+                        <div id="field-list-loading" class="info-text" style="display: none;">Loading fields...</div>
+                        <div id="field-list" class="object-list"></div>
+                    </div>
+                    <div class="object-selection-summary">
+                        <span id="field-selected-count">0 fields selected</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="field-modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="field-modal-clear" class="btn-secondary">Clear (Use All Fields)</button>
+                <button id="field-modal-save" class="btn-primary" disabled>Save Selected Fields</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External ID Selection Modal -->
+    <div id="external-id-selection-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="external-id-modal-title">Select External ID for <span id="external-id-modal-object-name"></span></h3>
+            </div>
+            <div class="modal-body">
+                <div class="object-selection-container">
+                    <div class="object-search">
+                        <input type="text" id="external-id-search-input" placeholder="Search relationship fields..." class="text-input">
+                    </div>
+                    <div class="object-list-container">
+                        <div id="external-id-list-loading" class="info-text" style="display: none;">Loading relationship fields...</div>
+                        <div id="external-id-list" class="object-list"></div>
+                    </div>
+                    <div class="object-selection-summary">
+                        <p class="info-text">Select one or more relationship fields to use as external ID. Use semicolon (;) to separate multiple fields for composite keys.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="external-id-modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="external-id-modal-save" class="btn-primary" disabled>Use Selected Field(s)</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Folder Modal -->
+    <div id="create-folder-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Folder</h3>
+            </div>
+            <div class="modal-body">
+                <label>Folder Name:</label>
+                <input type="text" id="folder-name-input" placeholder="Enter folder name" class="text-input">
+                <label style="margin-top: 12px;">Parent Folder (optional):</label>
+                <select id="parent-folder-select" class="select-input">
+                    <option value="">Root</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button id="create-folder-cancel" class="btn-secondary">Cancel</button>
+                <button id="create-folder-confirm" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reparent Configuration Modal -->
+    <div id="reparent-config-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reparent Configuration</h3>
+            </div>
+            <div class="modal-body">
+                <p class="help-text-small">
+                    Move configuration <strong id="reparent-config-name"></strong> to a different folder.
+                </p>
+                <label for="reparent-folder-select" style="margin-top: 8px;">New Parent Folder:</label>
+                <select id="reparent-folder-select" class="select-input">
+                    <option value="">Root</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button id="reparent-config-cancel" class="btn-secondary">Cancel</button>
+                <button id="reparent-config-confirm" class="btn-primary">Move</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Config Conflict Resolution Modal -->
+    <div id="config-conflict-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configuration Already Exists</h3>
+            </div>
+            <div class="modal-body">
+                <p id="config-conflict-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="config-conflict-cancel" class="btn-secondary">Cancel</button>
+                <button id="config-conflict-keep-both" class="btn-secondary">Keep Both</button>
+                <button id="config-conflict-replace" class="btn-primary">Replace</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Object Filter Modal -->
+    <div id="object-filter-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="object-filter-modal-title">Configure Filters</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="object-filter-where">WHERE Clause:</label>
+                    <textarea id="object-filter-where" class="text-input" rows="4" placeholder="e.g., Status = 'Active' AND CreatedDate >= 2024-01-01T00:00:00Z"></textarea>
+                    <p class="help-text-small">Enter SOQL WHERE clause conditions (without the WHERE keyword). Multiple conditions can be separated by AND.</p>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="object-filter-field-search">Insert Field API Name:</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="text" id="object-filter-field-search" class="text-input" placeholder="Search fields...">
+                        <div id="object-filter-field-pills" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px;"></div>
+                    </div>
+                    <p class="help-text-small" id="object-filter-field-loading" style="display: none; margin-top: 4px;">Loading fields...</p>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="object-filter-data-type">Insert Sample Value:</label>
+                    <div style="display: flex; gap: 8px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <select id="object-filter-data-type" class="text-input">
+                                <option value="string">String (with quotes)</option>
+                                <option value="number">Number</option>
+                                <option value="boolean-true">Boolean (true)</option>
+                                <option value="boolean-false">Boolean (false)</option>
+                                <option value="date">Date</option>
+                                <option value="datetime">DateTime</option>
+                                <option value="date-today">Date Formula: TODAY</option>
+                                <option value="date-yesterday">Date Formula: YESTERDAY</option>
+                                <option value="date-tomorrow">Date Formula: TOMORROW</option>
+                                <option value="date-last-week">Date Formula: LAST_WEEK</option>
+                                <option value="date-this-week">Date Formula: THIS_WEEK</option>
+                                <option value="date-next-week">Date Formula: NEXT_WEEK</option>
+                                <option value="date-last-month">Date Formula: LAST_MONTH</option>
+                                <option value="date-this-month">Date Formula: THIS_MONTH</option>
+                                <option value="date-next-month">Date Formula: NEXT_MONTH</option>
+                                <option value="date-last-year">Date Formula: LAST_YEAR</option>
+                                <option value="date-this-year">Date Formula: THIS_YEAR</option>
+                                <option value="date-next-year">Date Formula: NEXT_YEAR</option>
+                                <option value="null">Null</option>
+                            </select>
+                        </div>
+                        <button id="object-filter-insert" class="btn-secondary" style="white-space: nowrap;">Insert</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="object-filter-cancel" class="btn-secondary">Cancel</button>
+                <button id="object-filter-clear" class="btn-secondary">Clear</button>
+                <button id="object-filter-save" class="btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Configuration Modal -->
+    <div id="configuration-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Configuration</h3>
+                <div class="modal-tabs">
+                    <button id="config-tab-excluded-objects" class="modal-tab active">Excluded Objects</button>
+                    <button id="config-tab-last-modified-date" class="modal-tab" style="display: none;">Last Modified Date Filter</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- Excluded Objects Tab -->
+                <div id="config-tab-content-excluded-objects" class="tab-content active">
+                    <div class="filter-section">
+                        <label>Objects to exclude from migration (one per line):</label>
+                        <textarea id="excluded-objects" class="text-input" rows="12" placeholder="Account&#10;Order&#10;OrderItem&#10;Opportunity&#10;Quote"></textarea>
+                        <p class="help-text-small">These objects will be excluded from all phases.</p>
+                        <p class="help-text-small" id="excluded-objects-cpq-disclaimer" style="display: none; margin-top: 10px; padding: 10px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground);">
+                            <strong>Note:</strong> In CPQ mode, Product2 records are excluded by default. If you wish to include them, please remove Product2 from the list of excluded objects.<br><br>CPQ configuration records in the migration will match to existing Product2 records via <code>ProductCode</code>.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Last Modified Date Filter Tab -->
+                <div id="config-tab-content-last-modified-date" class="tab-content">
+                    <div class="form-group">
+                        <label for="cpq-advanced-last-modified-date">Last Modified Date</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="date" id="cpq-advanced-last-modified-date" class="text-input" style="flex: 1;">
+                            <button id="clear-last-modified-date" class="btn-secondary" type="button" title="Clear date">Clear</button>
+                        </div>
+                        <p class="help-text-small">
+                            Only migrate records modified on or after this date (YYYY-MM-DD format).
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="configuration-modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="configuration-modal-save" class="btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load modules in dependency order (explorer.js removed; native Tree View handles configs) -->
+    <script src="js/state.js"></script>
+    <script src="js/uiUtils.js"></script>
+    <script src="js/configManager.js"></script>
+    <script src="js/configChangeChecker.js"></script>
+    <script src="js/migrationObjects.js"></script>
+    <script src="js/migrationExecution.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/cpqMode.js"></script>
+    <script src="js/messageHandler.js"></script>
+    <script src="js/main.js"></script>
+    <!-- script.js removed - all functionality moved to modules -->
+</body>
+</html>
+
