@@ -155,8 +155,7 @@ export class MigrationPanel {
             {
                 enableScripts: true,
                 localResourceRoots: [
-                    vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'ui'),
-                    vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'codicons')
+                    vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'ui')
                 ],
                 retainContextWhenHidden: true
             }
@@ -226,9 +225,9 @@ export class MigrationPanel {
 
         let html = fsSync.readFileSync(htmlPath, 'utf8');
 
-        // Add codicon CSS for VSCode icons
+        // Add codicon CSS for VSCode icons (from bundled location)
         const codiconUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css')
+            vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'ui', 'codicons', 'codicon.css')
         );
         
         // Replace resource paths with webview URIs

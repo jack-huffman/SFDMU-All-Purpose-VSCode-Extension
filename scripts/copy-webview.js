@@ -36,3 +36,23 @@ if (fs.existsSync(jsSrcDir)) {
   });
 }
 
+// Copy codicons from node_modules to out directory for self-contained packaging
+const codiconsSrcDir = path.join(__dirname, '..', 'node_modules', '@vscode', 'codicons', 'dist');
+const codiconsOutDir = path.join(__dirname, '..', 'out', 'webview', 'ui', 'codicons');
+if (fs.existsSync(codiconsSrcDir)) {
+  fs.mkdirSync(codiconsOutDir, { recursive: true });
+  const codiconFiles = ['codicon.css', 'codicon.ttf'];
+  codiconFiles.forEach(file => {
+    const srcFile = path.join(codiconsSrcDir, file);
+    const outFile = path.join(codiconsOutDir, file);
+    if (fs.existsSync(srcFile)) {
+      fs.copyFileSync(srcFile, outFile);
+      console.log(`Copied codicons/${file} to out/webview/ui/codicons/`);
+    } else {
+      console.log(`Warning: codicon file ${file} not found`);
+    }
+  });
+} else {
+  console.log(`Warning: codicons directory not found at ${codiconsSrcDir}`);
+}
+
