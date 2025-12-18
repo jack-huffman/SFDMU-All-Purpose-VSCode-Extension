@@ -1,0 +1,39 @@
+# Git files
+.git/
+.gitignore
+.github/
+
+# Source files (only compiled output should be included)
+src/
+tsconfig.json
+
+# Development files
+node_modules/
+scripts/
+*.vsix
+
+# Build artifacts
+*.tsbuildinfo
+*.map
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+
