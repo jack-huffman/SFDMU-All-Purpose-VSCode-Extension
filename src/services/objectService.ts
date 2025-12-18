@@ -264,19 +264,35 @@ export async function validateObjectExists(
 export async function validateSOQLWhereClause(
   objectName: string,
   whereClause: string,
-  orgAlias: string
+  orgAlias: string,
+  orderByClause?: string,
+  limitClause?: string
 ): Promise<{ valid: boolean; error?: string }> {
   try {
-    // If whereClause is empty, it's valid (no filter)
-    if (!whereClause || whereClause.trim() === '') {
-      return { valid: true };
+    // Build test query with all provided clauses
+    let query = `SELECT Id FROM ${objectName}`;
+    
+    // Add WHERE clause if provided
+    if (whereClause && whereClause.trim() !== '') {
+      // Escape double quotes and backslashes in whereClause for shell safety
+      // SOQL uses single quotes for strings, so we only need to escape double quotes
+      const escapedWhereClause = whereClause.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      query += ` WHERE ${escapedWhereClause}`;
     }
     
-    // Build test query: SELECT Id FROM ObjectName WHERE whereClause LIMIT 1
-    // Escape double quotes and backslashes in whereClause for shell safety
-    // SOQL uses single quotes for strings, so we only need to escape double quotes
-    const escapedWhereClause = whereClause.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const query = `SELECT Id FROM ${objectName} WHERE ${escapedWhereClause} LIMIT 1`;
+    // Add ORDER BY clause if provided
+    if (orderByClause && orderByClause.trim() !== '') {
+      const escapedOrderBy = orderByClause.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      query += ` ORDER BY ${escapedOrderBy}`;
+    }
+    
+    // Add LIMIT clause if provided, otherwise use LIMIT 1 for validation
+    if (limitClause && limitClause.trim() !== '') {
+      const escapedLimit = limitClause.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      query += ` LIMIT ${escapedLimit}`;
+    } else {
+      query += ' LIMIT 1';
+    }
     
     // Execute the query - if it succeeds, the WHERE clause is valid
     // Use double quotes around the query (SOQL string literals use single quotes)

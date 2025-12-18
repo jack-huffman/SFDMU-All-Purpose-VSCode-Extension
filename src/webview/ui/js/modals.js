@@ -720,10 +720,12 @@
             }, 100);
         },
         
-        showObjectFilter: function(objectName, objectIndex, currentWhereClause) {
+        showObjectFilter: function(objectName, objectIndex, currentWhereClause, currentOrderByClause, currentLimitClause) {
             const modal = document.getElementById('object-filter-modal');
             const title = document.getElementById('object-filter-modal-title');
             const whereInput = document.getElementById('object-filter-where');
+            const orderByInput = document.getElementById('object-filter-orderby');
+            const limitInput = document.getElementById('object-filter-limit');
             const saveButton = document.getElementById('object-filter-save');
             const cancelButton = document.getElementById('object-filter-cancel');
             const clearButton = document.getElementById('object-filter-clear');
@@ -738,8 +740,10 @@
             // Field picker state - store all fields
             let filterModalFields = [];
             
-            title.textContent = `Configure Filters: ${objectName}`;
+            title.textContent = `Modify Query: ${objectName}`;
             whereInput.value = currentWhereClause || '';
+            if (orderByInput) orderByInput.value = currentOrderByClause || '';
+            if (limitInput) limitInput.value = currentLimitClause || '';
             
             // Reset field picker
             fieldSearchInput.value = '';
@@ -781,22 +785,78 @@
                 fieldLoadingP.style.display = 'none';
             }
             
+            // Function to extract the current word at cursor position
+            const getCurrentWord = (text, cursorPos) => {
+                // Word boundaries: spaces, operators, parentheses, quotes, commas, semicolons
+                // Also handle multi-character operators like !=, <=, >=, LIKE, IN, NOT, AND, OR
+                const wordBoundaryRegex = /[\s=!<>()'",;]/;
+                
+                // Check if we're in a string (between single quotes)
+                let inString = false;
+                let stringStart = -1;
+                for (let i = 0; i < cursorPos; i++) {
+                    if (text[i] === "'" && (i === 0 || text[i - 1] !== '\\')) {
+                        if (!inString) {
+                            inString = true;
+                            stringStart = i;
+                        } else {
+                            inString = false;
+                        }
+                    }
+                }
+                
+                // If we're inside a string, don't suggest fields
+                if (inString) {
+                    return { word: '', start: cursorPos, end: cursorPos };
+                }
+                
+                // Find the start of the current word
+                let start = cursorPos;
+                while (start > 0 && !wordBoundaryRegex.test(text[start - 1])) {
+                    start--;
+                }
+                
+                // Skip over operators at the start
+                while (start < cursorPos && /[=!<>]/.test(text[start])) {
+                    start++;
+                }
+                
+                // Find the end of the current word
+                let end = cursorPos;
+                while (end < text.length && !wordBoundaryRegex.test(text[end])) {
+                    end++;
+                }
+                
+                const word = text.substring(start, end).trim();
+                
+                // Don't suggest if the word looks like a keyword or operator
+                const soqlKeywords = ['AND', 'OR', 'NOT', 'IN', 'LIKE', 'NULL', 'TRUE', 'FALSE', 'TODAY', 'YESTERDAY', 'TOMORROW'];
+                if (soqlKeywords.includes(word.toUpperCase()) || /^\d+$/.test(word) || word.startsWith("'") || word.endsWith("'")) {
+                    return { word: '', start: cursorPos, end: cursorPos };
+                }
+                
+                return { word, start, end };
+            };
+            
             // Render field pills
-            const renderFieldPills = (fields, searchTerm = '') => {
+            const renderFieldPills = (fields, searchTerm = '', replaceStart = null, replaceEnd = null) => {
                 const pillsContainer = document.getElementById('object-filter-field-pills');
                 if (!pillsContainer) {
                     console.error('Field pills container not found');
                     return;
                 }
                 
+                // Always keep container visible with fixed height to prevent layout shift
+                pillsContainer.style.display = 'flex';
+                pillsContainer.style.flexWrap = 'wrap';
                 pillsContainer.innerHTML = '';
                 
-                if (!searchTerm) {
-                    return; // Don't show pills if no search term
+                if (!searchTerm || searchTerm.length < 1) {
+                    return; // Don't show pills if no search term or too short, but keep container visible
                 }
                 
                 if (!fields || fields.length === 0) {
-                    return; // No fields to show
+                    return; // No fields to show, but keep container visible
                 }
                 
                 const term = searchTerm.toLowerCase();
@@ -844,26 +904,20 @@
                     `;
                     
                     pill.addEventListener('click', () => {
-                        // Insert field name into WHERE clause at cursor position
+                        // Replace the current word with the field name
                         const currentWhereInput = document.getElementById('object-filter-where');
-                        if (currentWhereInput) {
-                            const start = currentWhereInput.selectionStart;
-                            const end = currentWhereInput.selectionEnd;
+                        if (currentWhereInput && replaceStart !== null && replaceEnd !== null) {
                             const text = currentWhereInput.value;
-                            const newText = text.substring(0, start) + field.name + text.substring(end);
+                            const newText = text.substring(0, replaceStart) + field.name + text.substring(replaceEnd);
                             currentWhereInput.value = newText;
                             
                             // Set cursor position after inserted field
-                            const newCursorPos = start + field.name.length;
+                            const newCursorPos = replaceStart + field.name.length;
                             currentWhereInput.setSelectionRange(newCursorPos, newCursorPos);
                             currentWhereInput.focus();
                         }
                         
-                        // Clear search input
-                        const currentSearchInput = document.getElementById('object-filter-field-search');
-                        if (currentSearchInput) {
-                            currentSearchInput.value = '';
-                        }
+                        // Clear pills (container stays visible to prevent layout shift)
                         pillsContainer.innerHTML = '';
                     });
                     
@@ -881,17 +935,20 @@
                 });
             };
             
-            // Field search handler - update pills as user types
+            // Field search handler - update pills as user types (kept for backward compatibility but hidden)
             const fieldSearchHandler = () => {
                 const currentSearchInput = document.getElementById('object-filter-field-search');
                 if (!currentSearchInput) {
-                    console.error('Field search input not found');
                     return;
                 }
                 
                 const searchTerm = currentSearchInput.value.trim();
-                if (filterModalFields.length > 0) {
-                    renderFieldPills(filterModalFields, searchTerm);
+                if (filterModalFields.length > 0 && searchTerm) {
+                    // Get cursor position in WHERE input for replacement
+                    const cursorPos = whereInput.selectionStart;
+                    const text = whereInput.value;
+                    const { start, end } = getCurrentWord(text, cursorPos);
+                    renderFieldPills(filterModalFields, searchTerm, start, end);
                 }
             };
             
@@ -908,13 +965,12 @@
                         filterModalFields = message.fields;
                         console.log('Loaded fields:', filterModalFields.length);
                         
-                        // If there's already text in the search, show matching pills
-                        const currentSearchInput = document.getElementById('object-filter-field-search');
-                        if (currentSearchInput) {
-                            const searchTerm = currentSearchInput.value.trim();
-                            if (searchTerm) {
-                                renderFieldPills(filterModalFields, searchTerm);
-                            }
+                        // Trigger autocomplete if user is typing in WHERE clause
+                        const cursorPos = whereInput.selectionStart;
+                        const text = whereInput.value;
+                        const { word, start, end } = getCurrentWord(text, cursorPos);
+                        if (word && word.length >= 1) {
+                            renderFieldPills(filterModalFields, word, start, end);
                         }
                     } else {
                         filterModalFields = [];
@@ -999,9 +1055,11 @@
             // Save handler - validates SOQL via backend
             const saveHandler = async () => {
                 const whereClause = whereInput.value.trim();
+                const orderByClause = orderByInput ? orderByInput.value.trim() : '';
+                const limitClause = limitInput ? limitInput.value.trim() : '';
                 
-                // Validate SOQL if clause is not empty
-                    if (whereClause) {
+                // Validate SOQL if any clause is provided
+                if (whereClause || orderByClause || limitClause) {
                     // Get org alias
                     const sourceOrgSelect = document.getElementById('source-org-select');
                     let orgAlias = sourceOrgSelect ? sourceOrgSelect.value : '';
@@ -1017,12 +1075,17 @@
                             errorMsg.id = 'object-filter-error';
                             errorMsg.className = 'error-text';
                             errorMsg.style.marginTop = '8px';
-                            whereInput.parentNode.appendChild(errorMsg);
+                            const firstInput = whereInput || orderByInput || limitInput;
+                            if (firstInput && firstInput.parentNode) {
+                                firstInput.parentNode.appendChild(errorMsg);
+                            }
                         }
-                        errorMsg.textContent = 'Please select a source org first to validate the WHERE clause';
+                        errorMsg.textContent = 'Please select a source org first to validate the query';
                         errorMsg.style.display = 'block';
-                        whereInput.classList.add('error-input');
-                        whereInput.focus();
+                        if (whereInput) whereInput.classList.add('error-input');
+                        if (orderByInput) orderByInput.classList.add('error-input');
+                        if (limitInput) limitInput.classList.add('error-input');
+                        (whereInput || orderByInput || limitInput)?.focus();
                         return;
                     }
                     
@@ -1036,6 +1099,8 @@
                     
                     // Remove any existing error styling
                     whereInput.classList.remove('error-input');
+                    if (orderByInput) orderByInput.classList.remove('error-input');
+                    if (limitInput) limitInput.classList.remove('error-input');
                     const existingErrorMsg = document.getElementById('object-filter-error');
                     if (existingErrorMsg) {
                         existingErrorMsg.style.display = 'none';
@@ -1047,7 +1112,9 @@
                             const message = event.data;
                             if (message.command === 'soqlWhereClauseValidated' && 
                                 message.objectName === objectName && 
-                                message.whereClause === whereClause) {
+                                message.whereClause === whereClause &&
+                                message.orderByClause === orderByClause &&
+                                message.limitClause === limitClause) {
                                 window.removeEventListener('message', validationHandler);
                                 
                                 // Restore button state
@@ -1064,14 +1131,19 @@
                                         errorMsg.id = 'object-filter-error';
                                         errorMsg.className = 'error-text';
                                         errorMsg.style.marginTop = '8px';
-                                        whereInput.parentNode.appendChild(errorMsg);
+                                        const firstInput = whereInput || orderByInput || limitInput;
+                                        if (firstInput && firstInput.parentNode) {
+                                            firstInput.parentNode.appendChild(errorMsg);
+                                        }
                                     }
-                                    errorMsg.textContent = `SOQL Error: ${message.error || 'Invalid WHERE clause'}`;
+                                    errorMsg.textContent = `SOQL Error: ${message.error || 'Invalid query'}`;
                                     errorMsg.style.display = 'block';
                                     
-                                    // Highlight the textarea
-                                    whereInput.classList.add('error-input');
-                                    whereInput.focus();
+                                    // Highlight the inputs
+                                    if (whereInput) whereInput.classList.add('error-input');
+                                    if (orderByInput) orderByInput.classList.add('error-input');
+                                    if (limitInput) limitInput.classList.add('error-input');
+                                    (whereInput || orderByInput || limitInput)?.focus();
                                     
                                     // Don't save, keep modal open
                                     resolve();
@@ -1080,7 +1152,17 @@
                                 
                                 // Validation passed - proceed with save
                                 if (State.currentConfig.objects && objectIndex >= 0 && objectIndex < State.currentConfig.objects.length) {
-                        State.currentConfig.objects[objectIndex].whereClause = whereClause;
+                                    State.currentConfig.objects[objectIndex].whereClause = whereClause;
+                                    if (orderByClause) {
+                                        State.currentConfig.objects[objectIndex].orderByClause = orderByClause;
+                                    } else {
+                                        delete State.currentConfig.objects[objectIndex].orderByClause;
+                                    }
+                                    if (limitClause) {
+                                        State.currentConfig.objects[objectIndex].limitClause = limitClause;
+                                    } else {
+                                        delete State.currentConfig.objects[objectIndex].limitClause;
+                                    }
                                     // Trigger update to save the change
                                     if (MigrationObjects.update) {
                                         MigrationObjects.update();
@@ -1095,7 +1177,9 @@
                                 resolve();
                             } else if (message.command === 'soqlWhereClauseValidationError' && 
                                       message.objectName === objectName && 
-                                      message.whereClause === whereClause) {
+                                      message.whereClause === whereClause &&
+                                      message.orderByClause === orderByClause &&
+                                      message.limitClause === limitClause) {
                                 window.removeEventListener('message', validationHandler);
                                 
                                 // Restore button state
@@ -1111,14 +1195,19 @@
                                     errorMsg.id = 'object-filter-error';
                                     errorMsg.className = 'error-text';
                                     errorMsg.style.marginTop = '8px';
-                                    whereInput.parentNode.appendChild(errorMsg);
+                                    const firstInput = whereInput || orderByInput || limitInput;
+                                    if (firstInput && firstInput.parentNode) {
+                                        firstInput.parentNode.appendChild(errorMsg);
+                                    }
                                 }
-                                errorMsg.textContent = `SOQL Error: ${message.error || 'Failed to validate WHERE clause'}`;
+                                errorMsg.textContent = `SOQL Error: ${message.error || 'Failed to validate query'}`;
                                 errorMsg.style.display = 'block';
                                 
-                                // Highlight the textarea
-                                whereInput.classList.add('error-input');
-                                whereInput.focus();
+                                // Highlight the inputs
+                                if (whereInput) whereInput.classList.add('error-input');
+                                if (orderByInput) orderByInput.classList.add('error-input');
+                                if (limitInput) limitInput.classList.add('error-input');
+                                (whereInput || orderByInput || limitInput)?.focus();
                                 
                                 resolve();
                             }
@@ -1126,18 +1215,23 @@
                         
                         window.addEventListener('message', validationHandler);
                         
-                        // Request validation from backend
+                        // Request validation from backend (still using WHERE clause validation for now)
+                        // The backend will validate the full query
                         vscode.postMessage({
                             command: 'validateSOQLWhereClause',
                             objectName: objectName,
                             whereClause: whereClause,
-                            orgAlias: orgAlias
+                            orgAlias: orgAlias,
+                            orderByClause: orderByClause,
+                            limitClause: limitClause
                         });
                     });
-                    } else {
-                    // Empty clause is valid - proceed with save
-                    // Remove error styling if clause is empty
+                } else {
+                    // No clauses provided - clear all query modifications
+                    // Remove error styling
                     whereInput.classList.remove('error-input');
+                    if (orderByInput) orderByInput.classList.remove('error-input');
+                    if (limitInput) limitInput.classList.remove('error-input');
                     const errorMsg = document.getElementById('object-filter-error');
                     if (errorMsg) {
                         errorMsg.style.display = 'none';
@@ -1145,25 +1239,31 @@
                     
                     if (State.currentConfig.objects && objectIndex >= 0 && objectIndex < State.currentConfig.objects.length) {
                         delete State.currentConfig.objects[objectIndex].whereClause;
-                    // Trigger update to save the change
-                    if (MigrationObjects.update) {
-                        MigrationObjects.update();
+                        delete State.currentConfig.objects[objectIndex].orderByClause;
+                        delete State.currentConfig.objects[objectIndex].limitClause;
+                        // Trigger update to save the change
+                        if (MigrationObjects.update) {
+                            MigrationObjects.update();
+                        }
+                        // Re-render to update the gear button appearance
+                        MigrationObjects.render();
+                        if (!State.isCheckingConfigChanges && window.SFDMU.ConfigChangeChecker) {
+                            window.SFDMU.ConfigChangeChecker.check();
+                        }
                     }
-                    // Re-render to update the gear button appearance
-                    MigrationObjects.render();
-                    if (!State.isCheckingConfigChanges && window.SFDMU.ConfigChangeChecker) {
-                        window.SFDMU.ConfigChangeChecker.check();
-                    }
-                }
-                this.hideObjectFilter();
+                    this.hideObjectFilter();
                 }
             };
             
             // Clear handler
             const clearHandler = () => {
                 whereInput.value = '';
+                if (orderByInput) orderByInput.value = '';
+                if (limitInput) limitInput.value = '';
                 if (State.currentConfig.objects && objectIndex >= 0 && objectIndex < State.currentConfig.objects.length) {
                     delete State.currentConfig.objects[objectIndex].whereClause;
+                    delete State.currentConfig.objects[objectIndex].orderByClause;
+                    delete State.currentConfig.objects[objectIndex].limitClause;
                     // Trigger update to save the change
                     if (MigrationObjects.update) {
                         MigrationObjects.update();
@@ -1177,14 +1277,53 @@
                 this.hideObjectFilter();
             };
             
-            // Clear error styling when user types
-            whereInput.addEventListener('input', () => {
+            // Autocomplete handler for WHERE clause
+            const whereInputHandler = () => {
                 whereInput.classList.remove('error-input');
                 const errorMsg = document.getElementById('object-filter-error');
                 if (errorMsg) {
                     errorMsg.style.display = 'none';
                 }
-            });
+                
+                // Get current word at cursor position
+                const cursorPos = whereInput.selectionStart;
+                const text = whereInput.value;
+                const { word, start, end } = getCurrentWord(text, cursorPos);
+                
+                // Only show suggestions if we have a word and fields are loaded
+                if (word && filterModalFields.length > 0) {
+                    renderFieldPills(filterModalFields, word, start, end);
+                } else {
+                    const pillsContainer = document.getElementById('object-filter-field-pills');
+                    if (pillsContainer) {
+                        pillsContainer.innerHTML = '';
+                        // Keep container visible to prevent layout shift
+                    }
+                }
+            };
+            
+            // Clear error styling when user types
+            whereInput.addEventListener('input', whereInputHandler);
+            whereInput.addEventListener('keyup', whereInputHandler);
+            whereInput.addEventListener('click', whereInputHandler);
+            if (orderByInput) {
+                orderByInput.addEventListener('input', () => {
+                    orderByInput.classList.remove('error-input');
+                    const errorMsg = document.getElementById('object-filter-error');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
+                });
+            }
+            if (limitInput) {
+                limitInput.addEventListener('input', () => {
+                    limitInput.classList.remove('error-input');
+                    const errorMsg = document.getElementById('object-filter-error');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
+                });
+            }
             
             // Remove old listeners and add new ones
             const newSaveButton = saveButton.cloneNode(true);
@@ -1200,6 +1339,8 @@
             newCancelButton.addEventListener('click', () => {
                 // Clear error styling when canceling
                 whereInput.classList.remove('error-input');
+                if (orderByInput) orderByInput.classList.remove('error-input');
+                if (limitInput) limitInput.classList.remove('error-input');
                 const errorMsg = document.getElementById('object-filter-error');
                 if (errorMsg) {
                     errorMsg.style.display = 'none';
@@ -1228,9 +1369,18 @@
             fieldSearchInput.parentNode.replaceChild(newFieldSearchInput, fieldSearchInput);
             newFieldSearchInput.addEventListener('input', () => {
                 const searchTerm = newFieldSearchInput.value.trim();
-                console.log('Search term:', searchTerm, 'Fields available:', filterModalFields.length);
-                if (filterModalFields.length > 0) {
-                    renderFieldPills(filterModalFields, searchTerm);
+                if (filterModalFields.length > 0 && searchTerm) {
+                    // Get cursor position in WHERE input for replacement
+                    const cursorPos = whereInput.selectionStart;
+                    const text = whereInput.value;
+                    const { start, end } = getCurrentWord(text, cursorPos);
+                    renderFieldPills(filterModalFields, searchTerm, start, end);
+                } else {
+                    const pillsContainer = document.getElementById('object-filter-field-pills');
+                    if (pillsContainer) {
+                        pillsContainer.innerHTML = '';
+                        // Keep container visible to prevent layout shift
+                    }
                 }
             });
             
@@ -1253,12 +1403,20 @@
         hideObjectFilter: function() {
             const modal = document.getElementById('object-filter-modal');
             const whereInput = document.getElementById('object-filter-where');
+            const orderByInput = document.getElementById('object-filter-orderby');
+            const limitInput = document.getElementById('object-filter-limit');
             modal.classList.remove('show');
             modal.style.display = 'none';
             
             // Clear error styling when hiding modal
             if (whereInput) {
                 whereInput.classList.remove('error-input');
+            }
+            if (orderByInput) {
+                orderByInput.classList.remove('error-input');
+            }
+            if (limitInput) {
+                limitInput.classList.remove('error-input');
             }
             const errorMsg = document.getElementById('object-filter-error');
             if (errorMsg) {

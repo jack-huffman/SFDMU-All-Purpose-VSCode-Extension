@@ -93,6 +93,16 @@ export function generateSOQLQuery(
       }
     }
     
+    // For custom queries, append ORDER BY and LIMIT if not already present
+    // Only append if they don't already exist in the query
+    if (migrationObject.orderByClause && !/\bORDER\s+BY\b/i.test(query)) {
+      query += ' ORDER BY ' + migrationObject.orderByClause;
+    }
+    
+    if (migrationObject.limitClause && !/\bLIMIT\b/i.test(query)) {
+      query += ' LIMIT ' + migrationObject.limitClause;
+    }
+    
     return query;
   }
   
@@ -151,6 +161,16 @@ export function generateSOQLQuery(
   // Add WHERE clause if we have conditions
   if (conditions.length > 0) {
     query += ' WHERE ' + conditions.join(' AND ');
+  }
+  
+  // Add ORDER BY clause if provided
+  if (migrationObject.orderByClause) {
+    query += ' ORDER BY ' + migrationObject.orderByClause;
+  }
+  
+  // Add LIMIT clause if provided
+  if (migrationObject.limitClause) {
+    query += ' LIMIT ' + migrationObject.limitClause;
   }
   
   return query;

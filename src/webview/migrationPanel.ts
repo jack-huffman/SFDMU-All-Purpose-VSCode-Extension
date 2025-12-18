@@ -67,7 +67,13 @@ export class MigrationPanel {
                         await this.handleGetAllFieldsWithDataType(message.objectName, message.orgAlias);
                         return;
                     case 'validateSOQLWhereClause':
-                        await this.handleValidateSOQLWhereClause(message.objectName, message.whereClause, message.orgAlias);
+                        await this.handleValidateSOQLWhereClause(
+                            message.objectName, 
+                            message.whereClause, 
+                            message.orgAlias,
+                            message.orderByClause,
+                            message.limitClause
+                        );
                         return;
                     case 'getOrgList':
                         await this.handleGetOrgList();
@@ -360,13 +366,21 @@ export class MigrationPanel {
         }
     }
 
-    private async handleValidateSOQLWhereClause(objectName: string, whereClause: string, orgAlias: string) {
+    private async handleValidateSOQLWhereClause(
+        objectName: string, 
+        whereClause: string, 
+        orgAlias: string, 
+        orderByClause?: string, 
+        limitClause?: string
+    ) {
         try {
-            const result = await validateSOQLWhereClause(objectName, whereClause, orgAlias);
+            const result = await validateSOQLWhereClause(objectName, whereClause, orgAlias, orderByClause, limitClause);
             this._panel.webview.postMessage({
                 command: 'soqlWhereClauseValidated',
                 objectName: objectName,
                 whereClause: whereClause,
+                orderByClause: orderByClause,
+                limitClause: limitClause,
                 valid: result.valid,
                 error: result.error
             });
@@ -375,6 +389,8 @@ export class MigrationPanel {
                 command: 'soqlWhereClauseValidationError',
                 objectName: objectName,
                 whereClause: whereClause,
+                orderByClause: orderByClause,
+                limitClause: limitClause,
                 valid: false,
                 error: error.message
             });

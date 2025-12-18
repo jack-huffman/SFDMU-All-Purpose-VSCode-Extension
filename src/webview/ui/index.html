@@ -392,27 +392,21 @@
     <div id="object-filter-modal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h3 id="object-filter-modal-title">Configure Filters</h3>
+                <h3 id="object-filter-modal-title">Modify Query</h3>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="object-filter-where">WHERE Clause:</label>
-                    <textarea id="object-filter-where" class="text-input" rows="4" placeholder="e.g., Status = 'Active' AND CreatedDate >= 2024-01-01T00:00:00Z"></textarea>
-                    <p class="help-text-small">Enter SOQL WHERE clause conditions (without the WHERE keyword). Multiple conditions can be separated by AND.</p>
-                </div>
-                <div class="form-group" style="margin-top: 16px;">
-                    <label for="object-filter-field-search">Insert Field API Name:</label>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <input type="text" id="object-filter-field-search" class="text-input" placeholder="Search fields...">
-                        <div id="object-filter-field-pills" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px;"></div>
-                    </div>
-                    <p class="help-text-small" id="object-filter-field-loading" style="display: none; margin-top: 4px;">Loading fields...</p>
-                </div>
-                <div class="form-group" style="margin-top: 16px;">
-                    <label for="object-filter-data-type">Insert Sample Value:</label>
-                    <div style="display: flex; gap: 8px; align-items: flex-end;">
-                        <div style="flex: 1;">
-                            <select id="object-filter-data-type" class="text-input">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="flex: 0 0 80%; display: flex; flex-direction: column;">
+                            <textarea id="object-filter-where" class="text-input" rows="4" placeholder="e.g., Status = 'Active' AND CreatedDate >= 2024-01-01T00:00:00Z"></textarea>
+                            <div id="object-filter-field-pills" style="display: flex; flex-wrap: wrap; gap: 6px; height: 90px; margin-top: 8px; overflow-y: auto; align-content: flex-start;"></div>
+                            <p class="help-text-small" id="object-filter-field-loading" style="display: none; margin-top: 4px;">Loading fields...</p>
+                            <p class="help-text-small" style="margin-top: 4px;">Enter SOQL WHERE clause conditions (without the WHERE keyword). Multiple conditions can be separated by AND. Field suggestions will appear as you type.</p>
+                        </div>
+                        <div style="flex: 0 0 20%; display: flex; flex-direction: column; gap: 8px;">
+                            <label for="object-filter-data-type" style="font-size: 13px; font-weight: 600; color: var(--vscode-foreground); margin-bottom: 4px;">Insert Sample Value:</label>
+                            <select id="object-filter-data-type" class="text-input" style="width: 100%;">
                                 <option value="string">String (with quotes)</option>
                                 <option value="number">Number</option>
                                 <option value="boolean-true">Boolean (true)</option>
@@ -433,9 +427,25 @@
                                 <option value="date-next-year">Date Formula: NEXT_YEAR</option>
                                 <option value="null">Null</option>
                             </select>
+                            <button id="object-filter-insert" class="btn-secondary" style="white-space: nowrap; width: 100%;">Insert</button>
                         </div>
-                        <button id="object-filter-insert" class="btn-secondary" style="white-space: nowrap;">Insert</button>
                     </div>
+                </div>
+                <div class="form-group" style="margin-top: 16px; display: none;">
+                    <label for="object-filter-field-search">Insert Field API Name:</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="text" id="object-filter-field-search" class="text-input" placeholder="Search fields...">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="object-filter-orderby">ORDER BY Clause:</label>
+                    <input type="text" id="object-filter-orderby" class="text-input" placeholder="e.g., CreatedDate DESC, Name ASC"></input>
+                    <p class="help-text-small">Enter field names to order by (without the ORDER BY keyword). Use ASC or DESC for direction.</p>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="object-filter-limit">LIMIT Clause:</label>
+                    <input type="text" id="object-filter-limit" class="text-input" placeholder="e.g., 100"></input>
+                    <p class="help-text-small">Enter a number to limit the number of records returned (without the LIMIT keyword).</p>
                 </div>
             </div>
             <div class="modal-footer">

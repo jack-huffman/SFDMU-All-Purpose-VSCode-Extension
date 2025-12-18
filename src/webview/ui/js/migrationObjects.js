@@ -146,7 +146,9 @@
                         useCustomQuery: useCustomQuery,
                         soqlQuery: soqlQuery,
                         selectedFields: oldObj.selectedFields,
-                        whereClause: oldObj.whereClause
+                        whereClause: oldObj.whereClause,
+                        orderByClause: oldObj.orderByClause,
+                        limitClause: oldObj.limitClause
                     });
                 }
             });
@@ -273,22 +275,29 @@
                 const filterBtn = document.createElement('button');
                 filterBtn.className = 'migration-action-btn migration-filter-btn';
                 filterBtn.type = 'button';
-                filterBtn.title = obj.whereClause ? 'Edit WHERE clause' : 'Add WHERE clause';
+                const hasQueryModifications = obj.whereClause || obj.orderByClause || obj.limitClause;
+                filterBtn.title = hasQueryModifications ? 'Edit Query' : 'Modify Query';
                 filterBtn.innerHTML = `
                     <span class="codicon codicon-edit" style="margin-right: 4px;"></span>
-                    WHERE
+                    Modify Query
                 `;
                 // Set initial button state
-                if (obj.whereClause) {
+                if (hasQueryModifications) {
                     filterBtn.classList.add('has-filter');
-                    filterBtn.title = 'Edit WHERE clause';
+                    filterBtn.title = 'Edit Query';
                 } else {
-                    filterBtn.title = 'Add WHERE clause';
+                    filterBtn.title = 'Modify Query';
                 }
                 
                 filterBtn.addEventListener('click', () => {
                     if (window.SFDMU.Modals) {
-                        window.SFDMU.Modals.showObjectFilter(obj.objectName, index, obj.whereClause || '');
+                        window.SFDMU.Modals.showObjectFilter(
+                            obj.objectName, 
+                            index, 
+                            obj.whereClause || '', 
+                            obj.orderByClause || '', 
+                            obj.limitClause || ''
+                        );
                     }
                 });
                 

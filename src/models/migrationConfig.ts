@@ -23,6 +23,8 @@ export interface MigrationObject {
   useCustomQuery: boolean;
   selectedFields?: string[]; // Selected fields for migration (if empty/null, uses all fields)
   whereClause?: string; // Custom WHERE clause for this object's SOQL query
+  orderByClause?: string; // Custom ORDER BY clause for this object's SOQL query
+  limitClause?: string; // Custom LIMIT clause for this object's SOQL query
 }
 
 export interface MigrationPhase {

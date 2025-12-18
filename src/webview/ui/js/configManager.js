@@ -385,7 +385,10 @@
                     externalId: obj.externalId || '',
                     soqlQuery: obj.soqlQuery || '',
                     useCustomQuery: obj.useCustomQuery || false,
-                    selectedFields: (obj.selectedFields || []).sort()
+                    selectedFields: (obj.selectedFields || []).sort(),
+                    whereClause: obj.whereClause || '',
+                    orderByClause: obj.orderByClause || '',
+                    limitClause: obj.limitClause || ''
                 })),
                 selectedPhases: (config.selectedPhases || []).slice().sort(),
                 includeProduct2: !!config.includeProduct2,

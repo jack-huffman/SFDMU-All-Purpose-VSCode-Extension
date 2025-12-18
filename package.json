@@ -2,7 +2,7 @@
   "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration",
   "description": "Visual interface for configuring and executing SFDMU data migrations for any Salesforce objects",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "publisher": "JackHuffman",
   "icon": "icon.png",
   "repository": {
