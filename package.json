@@ -1,5 +1,5 @@
 {
-  "name": "sfdmu-all-purpose-migration-utility",
+  "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration Utility",
   "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects or CPQ data between Salesforce orgs",
   "version": "0.1.4",
