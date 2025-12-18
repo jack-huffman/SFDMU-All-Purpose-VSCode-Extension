@@ -1,8 +1,8 @@
 {
   "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration",
-  "description": "Visual interface for configuring and executing SFDMU data migrations for any Salesforce objects",
-  "version": "0.1.2",
+  "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects or CPQ data between Salesforce orgs",
+  "version": "0.1.3",
   "publisher": "JackHuffman",
   "icon": "icon.png",
   "repository": {
