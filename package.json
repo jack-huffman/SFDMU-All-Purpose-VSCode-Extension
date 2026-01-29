@@ -1,8 +1,8 @@
 {
   "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration Utility",
-  "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects CPQ data, or RCA data between Salesforce orgs",
-  "version": "0.2.1",
+  "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects, CPQ data, or RCA data between Salesforce orgs",
+  "version": "0.2.2",
   "publisher": "JackHuffman",
   "icon": "icon.png",
   "repository": {
