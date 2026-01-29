@@ -1066,13 +1066,16 @@ export class MigrationPanel {
                 return;
             }
 
-            // Query children for each child configuration
+            // Fetch Children: match children by the lookup Id field (e.g. SBQQ__PriceRule2__c) = parent Salesforce Ids.
+            // We do NOT use the external ID (e.g. SBQQ__PriceRule2__r.Name) in the WHERE; that is only for export.json.
+            // childExternalId is passed to queryMasterRecords only for the SELECT clause (which fields to return).
             for (const childConfig of effectiveChildConfigs) {
-                const whereClause = `${childConfig.relationshipField} IN ('${parentIds.join("', '")}')`;
+                const childLookupIdField = childConfig.relationshipField; // e.g. SBQQ__PriceRule2__c (Id field)
+                const whereClause = `${childLookupIdField} IN ('${parentIds.join("', '")}')`;
                 
                 const childRecords = await queryMasterRecords(
                     childConfig.childObjectName,
-                    childConfig.childExternalId,
+                    childConfig.childExternalId, // Used only for SELECT (display); export.json uses this elsewhere
                     orgAlias,
                     { whereClause },
                     1000
@@ -1082,7 +1085,7 @@ export class MigrationPanel {
                 const childRecordsByParentExternalId: { [parentExternalId: string]: any[] } = {};
                 
                 childRecords.forEach(childRecord => {
-                    const parentSalesforceId = childRecord[childConfig.relationshipField];
+                    const parentSalesforceId = childRecord[childLookupIdField];
                     if (parentSalesforceId && parentIdMap[parentSalesforceId]) {
                         const parentExternalId = parentIdMap[parentSalesforceId];
                         if (!childRecordsByParentExternalId[parentExternalId]) {

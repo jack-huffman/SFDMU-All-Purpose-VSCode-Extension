@@ -1106,7 +1106,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 8px;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 8px;
     background-color: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
@@ -1131,16 +1133,18 @@ body {
 .cpq-parent-record-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: auto;
+    gap: 12px;
+    margin-left: 16px;
 }
 
-/* Fetch children button */
+/* Fetch children button; height matches icon-button (View record) */
 .cpq-fetch-children-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 8px;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 8px;
     background-color: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
@@ -1149,7 +1153,6 @@ body {
     font-size: 12px;
     transition: background-color 0.2s ease;
     min-width: 32px;
-    height: 24px;
 }
 
 .cpq-fetch-children-btn:hover:not(:disabled) {

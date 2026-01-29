@@ -219,7 +219,7 @@
         const sourceOrgAlias = State.currentConfig.sourceOrg.alias || 
                               State.currentConfig.sourceOrg.username || '';
         
-        // Query children for this single parent
+        // Fetch Children: backend resolves parent Id(s) then queries children by lookup Id field (e.g. SBQQ__PriceRule2__c), not by external ID (e.g. __r.Name).
         vscode.postMessage({
             command: 'queryChildrenForParents',
             parentObjectName: parentObjectName,
@@ -275,7 +275,8 @@
         const phaseSelections = State.currentConfig?.selectedMasterRecords?.[phaseNumber] || {};
         const queriedForParent = queriedChildRecords[phaseNumber]?.[parentObjectName]?.[parentExternalId] || {};
         
-        // Build same list as row: queried + manually selected that match this parent (so modal count matches row)
+        // Build same list as row: queried + manually selected that match this parent (so modal count matches row).
+        // Accumulate per childObjectName and dedupe by externalId (allChildConfigs can have same child type twice: comprehensive + hierarchical).
         const children = {};
         allChildConfigs.forEach(childConfig => {
             const childObjectName = childConfig.childObjectName || childConfig.objectName;
@@ -286,16 +287,17 @@
                 typeof item === 'object' && item.externalId ? item.externalId : item
             );
             const childRecords = [];
-            const addedChildIds = new Set();
+            const addedKeys = new Set();
             queriedChildren.forEach(childRecord => {
-                const id = buildExternalIdFromRecord(childRecord, childExternalId);
-                if (id && !addedChildIds.has(id)) {
-                    addedChildIds.add(id);
-                    childRecords.push({ record: childRecord, externalId: id, isQueried: true });
+                const displayId = buildExternalIdFromRecord(childRecord, childExternalId);
+                const uniqueKey = childRecord.Id ?? displayId;
+                if (uniqueKey && !addedKeys.has(uniqueKey)) {
+                    addedKeys.add(uniqueKey);
+                    childRecords.push({ record: childRecord, externalId: displayId, isQueried: true });
                 }
             });
             childSelectedIds.forEach(childExternalIdValue => {
-                if (addedChildIds.has(childExternalIdValue)) return;
+                if (addedKeys.has(childExternalIdValue)) return;
                 let isMatch = false;
                 if (phaseNumber === 3 && parentObjectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {
                     isMatch = (parentExternalId || '').trim().toLowerCase() === (childExternalIdValue || '').trim().toLowerCase();
@@ -313,12 +315,24 @@
                     }
                 }
                 if (isMatch) {
-                    addedChildIds.add(childExternalIdValue);
+                    addedKeys.add(childExternalIdValue);
                     childRecords.push({ externalId: childExternalIdValue, isQueried: false });
                 }
             });
             if (childRecords.length > 0) {
-                children[childObjectName] = childRecords;
+                if (!children[childObjectName]) {
+                    children[childObjectName] = [];
+                }
+                // Use record Id when present so multiple children with same config externalId (e.g. LookupQuery under one PriceRule) all show
+                const getUniqueKey = (item) => item.record?.Id ?? item.externalId;
+                const existingKeys = new Set((children[childObjectName] || []).map(getUniqueKey));
+                childRecords.forEach(item => {
+                    const key = getUniqueKey(item);
+                    if (key && !existingKeys.has(key)) {
+                        existingKeys.add(key);
+                        children[childObjectName].push(item);
+                    }
+                });
             }
         });
         
@@ -378,6 +392,16 @@
                     }
                 } else {
                     childDisplayName = item.externalId || 'Unnamed Record';
+                }
+                // If display name is the parent's name (e.g. from relationship field like SBQQ__Rule__r.Name), show child identity instead
+                const parentNameNorm = (parentExternalId || '').trim().toLowerCase();
+                const displayNorm = (childDisplayName || '').trim().toLowerCase();
+                if (parentNameNorm && displayNorm === parentNameNorm) {
+                    if (item.record && item.record.Id) {
+                        childDisplayName = 'Record ' + item.record.Id.slice(-8);
+                    } else {
+                        childDisplayName = 'Unnamed Record';
+                    }
                 }
                 const childName = document.createElement('span');
                 childName.className = 'cpq-children-modal-item-name';
@@ -1191,19 +1215,15 @@
         // Single view: all selected records use the same "parent" row structure. View/Fetch children only when object has children.
         const objectsWithSelections = [];
         parentObjects.forEach(parentObjectName => {
-            const ids = (phaseSelections[parentObjectName] || []).map(item =>
-                typeof item === 'object' && item.externalId ? item.externalId : item
-            );
-            if (ids.length > 0) objectsWithSelections.push({ objectName: parentObjectName, selectedIds: ids });
+            const list = phaseSelections[parentObjectName] || [];
+            if (list.length > 0) objectsWithSelections.push({ objectName: parentObjectName, selectedRecordsList: list });
         });
         nonParentObjects.forEach(objectName => {
-            const ids = (phaseSelections[objectName] || []).map(item =>
-                typeof item === 'object' && item.externalId ? item.externalId : item
-            );
-            if (ids.length > 0) objectsWithSelections.push({ objectName, selectedIds: ids });
+            const list = phaseSelections[objectName] || [];
+            if (list.length > 0) objectsWithSelections.push({ objectName, selectedRecordsList: list });
         });
 
-        objectsWithSelections.forEach(({ objectName, selectedIds }) => {
+        objectsWithSelections.forEach(({ objectName, selectedRecordsList }) => {
             const comprehensiveChildren = (COMPREHENSIVE_RELATIONSHIPS[objectName] || [])
                 .filter(child => child.phaseNumber === phase.phaseNumber);
             const hierarchicalConfigForParent = hierarchicalConfig[objectName];
@@ -1218,10 +1238,11 @@
             const objectGroup = document.createElement('div');
             objectGroup.className = 'cpq-selected-records-group';
 
-            const recordCount = selectedIds.length;
+            const recordCount = selectedRecordsList.length;
             // Header child count = sum of each row’s child count (same logic as the rows)
             let sectionChildCount = 0;
-            selectedIds.forEach(recordExternalId => {
+            selectedRecordsList.forEach(selectionItem => {
+                const recordExternalId = typeof selectionItem === 'object' && selectionItem.externalId ? selectionItem.externalId : selectionItem;
                 const childrenByObjectType = new Map();
                 allChildConfigs.forEach(childConfig => {
                     const childObjectName = childConfig.childObjectName || childConfig.objectName;
@@ -1232,16 +1253,17 @@
                         typeof item === 'object' && item.externalId ? item.externalId : item
                     );
                     const childRecords = [];
-                    const addedChildIds = new Set();
+                    const addedKeys = new Set();
                     queriedChildren.forEach(childRecord => {
                         const childRecordExternalId = buildExternalIdFromRecord(childRecord, childExternalId);
-                        if (childRecordExternalId && !addedChildIds.has(childRecordExternalId)) {
-                            addedChildIds.add(childRecordExternalId);
+                        const uniqueKey = childRecord.Id ?? childRecordExternalId;
+                        if (uniqueKey && !addedKeys.has(uniqueKey)) {
+                            addedKeys.add(uniqueKey);
                             childRecords.push({ record: childRecord, externalId: childRecordExternalId, isQueried: true });
                         }
                     });
                     childSelectedIds.forEach(childExternalIdValue => {
-                        if (addedChildIds.has(childExternalIdValue)) return;
+                        if (addedKeys.has(childExternalIdValue)) return;
                         let isMatch = false;
                         if (phase.phaseNumber === 3 && objectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {
                             isMatch = (recordExternalId || '').trim().toLowerCase() === (childExternalIdValue || '').trim().toLowerCase();
@@ -1259,7 +1281,7 @@
                             }
                         }
                         if (isMatch) {
-                            addedChildIds.add(childExternalIdValue);
+                            addedKeys.add(childExternalIdValue);
                             childRecords.push({ externalId: childExternalIdValue, isQueried: false });
                         }
                     });
@@ -1267,7 +1289,16 @@
                         if (!childrenByObjectType.has(childObjectName)) {
                             childrenByObjectType.set(childObjectName, []);
                         }
-                        childrenByObjectType.get(childObjectName).push(...childRecords);
+                        const existing = childrenByObjectType.get(childObjectName);
+                        const getUniqueKey = (item) => item.record?.Id ?? item.externalId;
+                        const existingKeys = new Set(existing.map(getUniqueKey));
+                        childRecords.forEach(item => {
+                            const key = getUniqueKey(item);
+                            if (key && !existingKeys.has(key)) {
+                                existingKeys.add(key);
+                                existing.push(item);
+                            }
+                        });
                     }
                 });
                 childrenByObjectType.forEach(records => {
@@ -1299,7 +1330,9 @@
             const recordsList = document.createElement('div');
             recordsList.className = 'cpq-selected-records-list';
 
-            selectedIds.forEach(recordExternalId => {
+            selectedRecordsList.forEach(selectionItem => {
+                const recordExternalId = typeof selectionItem === 'object' && selectionItem.externalId ? selectionItem.externalId : selectionItem;
+                const recordId = typeof selectionItem === 'object' && selectionItem.id ? selectionItem.id : null;
                 const childrenByObjectType = new Map();
                 allChildConfigs.forEach(childConfig => {
                     const childObjectName = childConfig.childObjectName || childConfig.objectName;
@@ -1310,16 +1343,17 @@
                         typeof item === 'object' && item.externalId ? item.externalId : item
                     );
                     const childRecords = [];
-                    const addedChildIds = new Set();
+                    const addedKeys = new Set();
                     queriedChildren.forEach(childRecord => {
                         const childRecordExternalId = buildExternalIdFromRecord(childRecord, childExternalId);
-                        if (childRecordExternalId && !addedChildIds.has(childRecordExternalId)) {
-                            addedChildIds.add(childRecordExternalId);
+                        const uniqueKey = childRecord.Id ?? childRecordExternalId;
+                        if (uniqueKey && !addedKeys.has(uniqueKey)) {
+                            addedKeys.add(uniqueKey);
                             childRecords.push({ record: childRecord, externalId: childRecordExternalId, isQueried: true });
                         }
                     });
                     childSelectedIds.forEach(childExternalIdValue => {
-                        if (addedChildIds.has(childExternalIdValue)) return;
+                        if (addedKeys.has(childExternalIdValue)) return;
                         let isMatch = false;
                         if (phase.phaseNumber === 3 && objectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {
                             isMatch = (recordExternalId || '').trim().toLowerCase() === (childExternalIdValue || '').trim().toLowerCase();
@@ -1337,7 +1371,7 @@
                             }
                         }
                         if (isMatch) {
-                            addedChildIds.add(childExternalIdValue);
+                            addedKeys.add(childExternalIdValue);
                             childRecords.push({ externalId: childExternalIdValue, isQueried: false });
                         }
                     });
@@ -1345,7 +1379,16 @@
                         if (!childrenByObjectType.has(childObjectName)) {
                             childrenByObjectType.set(childObjectName, []);
                         }
-                        childrenByObjectType.get(childObjectName).push(...childRecords);
+                        const existing = childrenByObjectType.get(childObjectName);
+                        const getUniqueKey = (item) => item.record?.Id ?? item.externalId;
+                        const existingKeys = new Set(existing.map(getUniqueKey));
+                        childRecords.forEach(item => {
+                            const key = getUniqueKey(item);
+                            if (key && !existingKeys.has(key)) {
+                                existingKeys.add(key);
+                                existing.push(item);
+                            }
+                        });
                     }
                 });
 
@@ -1424,6 +1467,21 @@
                         );
                     });
                     actionButtonsContainer.appendChild(childrenBtn);
+                }
+
+                // Open in Salesforce button (same as master selection modal)
+                if (recordId && State.currentConfig.sourceOrg?.instanceUrl) {
+                    const viewInSfBtn = document.createElement('button');
+                    viewInSfBtn.type = 'button';
+                    viewInSfBtn.className = 'icon-button';
+                    viewInSfBtn.title = 'View record in Salesforce';
+                    viewInSfBtn.innerHTML = '<span class="codicon codicon-link-external"></span>';
+                    viewInSfBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const recordUrl = `${State.currentConfig.sourceOrg.instanceUrl}/${recordId}`;
+                        vscode.postMessage({ command: 'openExternal', url: recordUrl });
+                    });
+                    actionButtonsContainer.appendChild(viewInSfBtn);
                 }
 
                 recordHeader.appendChild(nameContainer);
