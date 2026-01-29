@@ -1,8 +1,8 @@
 {
   "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration Utility",
-  "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects or CPQ data between Salesforce orgs",
-  "version": "0.2.0",
+  "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects CPQ data, or RCA data between Salesforce orgs",
+  "version": "0.2.1",
   "publisher": "JackHuffman",
   "icon": "icon.png",
   "repository": {
@@ -17,7 +17,6 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "onCommand:sfdmu-all-purpose.openMigrationPanel",
     "onView:sfdmuMigration"
   ],
   "contributes": {
@@ -35,7 +34,8 @@
       {
         "command": "sfdmu-all-purpose.refreshConfigTree",
         "title": "Refresh Configurations",
-        "category": "SFDMU"
+        "category": "SFDMU",
+        "icon": "$(refresh)"
       },
       {
         "command": "sfdmu-all-purpose.createConfigFolder",
@@ -99,6 +99,11 @@
           "command": "sfdmu-all-purpose.createConfigFolder",
           "when": "view == sfdmuMigration",
           "group": "navigation@1"
+        },
+        {
+          "command": "sfdmu-all-purpose.refreshConfigTree",
+          "when": "view == sfdmuMigration",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
