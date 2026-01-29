@@ -176,22 +176,11 @@ const PHASE_DEFINITIONS: PhaseConfig[] = [
   }
 ];
 
-// Load RCA configuration from JSON file
+// Load RCA configuration from JSON file (bundled in webview/ui/js/rca/)
 async function loadRcaConfig(): Promise<RcaConfigFile> {
-  const configPath = path.join(__dirname, '../../rca-complete-config.json');
-  try {
-    const content = await fs.readFile(configPath, 'utf8');
-    return JSON.parse(content) as RcaConfigFile;
-  } catch (error) {
-    // If file not found in expected location, try workspace root
-    const workspaceConfigPath = path.join(__dirname, '../../../rca-complete-config.json');
-    try {
-      const content = await fs.readFile(workspaceConfigPath, 'utf8');
-      return JSON.parse(content) as RcaConfigFile;
-    } catch (err) {
-      throw new Error(`Failed to load RCA configuration: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
+  const configPath = path.join(__dirname, '../webview/ui/js/rca/rca-complete-config.json');
+  const content = await fs.readFile(configPath, 'utf8');
+  return JSON.parse(content) as RcaConfigFile;
 }
 
 // Map of object name to configuration (handles multiple configs per object)

@@ -315,17 +315,16 @@
         const title = document.createElement('h3');
         title.className = 'rca-phase-title';
         title.textContent = `Phase ${phase.phaseNumber}`;
+        titleRow.appendChild(title);
         
-        // Warning badge for Phase 7 (metadata prerequisites)
+        // Warning badge for Phase 7 (metadata prerequisites) - sibling so title row gap adds spacing
         if (phase.phaseNumber === 7) {
             const warningBadge = document.createElement('span');
             warningBadge.className = 'phase-warning-badge';
             warningBadge.textContent = '⚠ Requires Metadata';
             warningBadge.title = 'This phase requires DecisionMatrixDefinition and ExpressionSet metadata objects to be deployed first';
-            title.appendChild(warningBadge);
+            titleRow.appendChild(warningBadge);
         }
-        
-        titleRow.appendChild(title);
         
         // Mark as Complete/Incomplete button - next to the title
         const doneBtn = document.createElement('button');

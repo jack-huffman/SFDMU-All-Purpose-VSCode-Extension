@@ -1541,6 +1541,31 @@ body {
     min-height: 0;
 }
 
+/* RCA Alpha disclaimer banner - full width above phase tabs */
+.rca-alpha-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 10px 16px;
+    background-color: var(--vscode-inputValidation-warningBackground);
+    color: var(--vscode-inputValidation-warningForeground);
+    border-bottom: 1px solid var(--vscode-inputValidation-warningBorder);
+    flex-shrink: 0;
+}
+
+.rca-alpha-banner-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rca-alpha-banner-subtext {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
 .rca-mode-container .section {
     margin-bottom: 8px;
 }
@@ -1901,13 +1926,16 @@ body {
 }
 
 .phase-warning-badge {
-    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     background-color: var(--vscode-inputValidation-warningBackground);
     color: var(--vscode-inputValidation-warningForeground);
     border: 1px solid var(--vscode-inputValidation-warningBorder);
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 18px;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 .rca-mode-container .individual-phase-objects {
