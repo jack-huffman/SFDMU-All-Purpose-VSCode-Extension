@@ -34,14 +34,6 @@
                 
                 const hasChanges = ConfigManager.configsAreDifferent(State.currentConfig, State.lastGeneratedConfig);
                 
-                console.log('Config change check:', {
-                    hasChanges,
-                    hasLastGenerated: !!State.lastGeneratedConfig,
-                    currentObjects: State.currentConfig.objects?.length || 0,
-                    lastObjects: State.lastGeneratedConfig?.objects?.length || 0,
-                    skipUpdateMigrationObjects
-                });
-                
                 if (hasChanges) {
                     this.addBadges();
                 } else {

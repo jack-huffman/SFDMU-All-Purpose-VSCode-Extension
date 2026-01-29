@@ -1,0 +1,1945 @@
+{
+  "CurrencyType": {
+    "sobject": "CurrencyType",
+    "configs": [
+      {
+        "query": "SELECT ConversionRate, DecimalPlaces, IsActive, IsCorporate, IsoCode FROM CurrencyType ",
+        "externalIdField": "IsoCode",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "UnitOfMeasureClass": {
+    "sobject": "UnitOfMeasureClass",
+    "configs": [
+      {
+        "query": "SELECT Name, Type, Code, Description, Status FROM UnitOfMeasureClass WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {
+          "Status": "Draft"
+        },
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      },
+      {
+        "query": "SELECT Name, BaseUnitOfMeasure.Name, DefaultUnitOfMeasure.Name, Code, Description, Status FROM UnitOfMeasureClass WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "BaseUnitOfMeasure",
+            "sobject": "UnitOfMeasure",
+            "externalId": "Name",
+            "targetField": "BaseUnitOfMeasureId"
+          },
+          {
+            "field": "DefaultUnitOfMeasure",
+            "sobject": "UnitOfMeasure",
+            "externalId": "Name",
+            "targetField": "DefaultUnitOfMeasureId"
+          }
+        ],
+        "overrides": {
+          "Status": "Active"
+        },
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "UnitOfMeasure": {
+    "sobject": "UnitOfMeasure",
+    "configs": [
+      {
+        "query": "SELECT Name, Type, CurrencyIsoCode, ConversionFactor, Description, Scale, RoundingMethod, Sequence, Status, UnitCode, UnitOfMeasureClass.Code FROM UnitOfMeasure WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "UnitOfMeasureClass",
+            "sobject": "UnitOfMeasureClass",
+            "externalId": "Code",
+            "targetField": "UnitOfMeasureClassId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeCategory": {
+    "sobject": "AttributeCategory",
+    "configs": [
+      {
+        "query": "SELECT Name, Description, Code FROM AttributeCategory WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributePicklist": {
+    "sobject": "AttributePicklist",
+    "configs": [
+      {
+        "query": "SELECT Code, Name, CurrencyIsoCode,Description, UnitOfMeasure.Name, DataType, Status FROM AttributePicklist WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "UnitOfMeasure",
+            "sobject": "UnitOfMeasure",
+            "externalId": "Name",
+            "targetField": "UnitOfMeasureId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributePicklistValue": {
+    "sobject": "AttributePicklistValue",
+    "configs": [
+      {
+        "query": "SELECT Name, CurrencyIsoCode, Code, Abbreviation, DisplayValue, IsDefault, Picklist.Name, Sequence, Status, Value FROM AttributePicklistValue WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "Picklist",
+            "sobject": "AttributePicklist",
+            "externalId": "Name",
+            "targetField": "PicklistId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeDefinition": {
+    "sobject": "AttributeDefinition",
+    "configs": [
+      {
+        "query": "SELECT Code, CurrencyIsoCode, DefaultHelpText, IsRequired, DataType,DefaultValue,Description,DeveloperName,IsActive, Label, Name, Picklist.Name, ValueDescription, UnitOfMeasure.Name FROM AttributeDefinition WHERE  Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "Picklist",
+            "sobject": "AttributePicklist",
+            "externalId": "Name",
+            "targetField": "PicklistId"
+          },
+          {
+            "field": "UnitOfMeasure",
+            "sobject": "UnitOfMeasure",
+            "externalId": "Name",
+            "targetField": "UnitOfMeasureId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeCategoryAttribute": {
+    "sobject": "AttributeCategoryAttribute",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, AttributeCategory.Code, AttributeDefinition.Code FROM AttributeCategoryAttribute",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeCategory.Code",
+            "AttributeDefinition.Code"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "AttributeCategory",
+            "sobject": "AttributeCategory",
+            "externalId": "Code",
+            "targetField": "AttributeCategoryId"
+          },
+          {
+            "field": "AttributeDefinition",
+            "sobject": "AttributeDefinition",
+            "externalId": "Code",
+            "targetField": "AttributeDefinitionId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductClassification": {
+    "sobject": "ProductClassification",
+    "configs": [
+      {
+        "query": "SELECT Code, CurrencyIsoCode, Name, Status FROM ProductClassification WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductClassificationAttr": {
+    "sobject": "ProductClassificationAttr",
+    "configs": [
+      {
+        "query": "SELECT AttributeCategory.Code, CurrencyIsoCode, AttributeDefinition.Code, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Name, ProductClassification.Code, Sequence, Status, StepValue, ValueDescription FROM ProductClassificationAttr ",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeDefinition.Code",
+            "ProductClassification.Code"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "AttributeCategory",
+            "sobject": "AttributeCategory",
+            "externalId": "Code",
+            "targetField": "AttributeCategoryId"
+          },
+          {
+            "field": "AttributeDefinition",
+            "sobject": "AttributeDefinition",
+            "externalId": "Code",
+            "targetField": "AttributeDefinitionId"
+          },
+          {
+            "field": "ProductClassification",
+            "sobject": "ProductClassification",
+            "externalId": "Code",
+            "targetField": "ProductClassificationId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "LegalEntity": {
+    "sobject": "LegalEntity",
+    "configs": [
+      {
+        "query": "SELECT CompanyName, CurrencyIsoCode, Description, LegalEntityCity, LegalEntityCountry, LegalEntityGeocodeAccuracy, LegalEntityLatitude, LegalEntityLongitude, LegalEntityPostalCode, LegalEntityState, LegalEntityStreet, Name, Status FROM LegalEntity ",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "PaymentTerm": {
+    "sobject": "PaymentTerm",
+    "configs": [
+      {
+        "query": "SELECT Description, Name, Status FROM PaymentTerm WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {
+          "Status": "Draft",
+          "IsDefault": "false"
+        },
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      },
+      {
+        "query": "SELECT Description, IsDefault, Name, Status FROM PaymentTerm ",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "PaymentTermItem": {
+    "sobject": "PaymentTermItem",
+    "configs": [
+      {
+        "query": "SELECT Description, Name, PaymentTerm.Name, PaymentTimeframe, Period, PeriodUnit, Type FROM PaymentTermItem WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "PaymentTerm",
+            "sobject": "PaymentTerm",
+            "externalId": "Name",
+            "targetField": "PaymentTermId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "TaxEngineProvider": {
+    "sobject": "TaxEngineProvider",
+    "configs": [
+      {
+        "query": "SELECT ApexAdapter.Name, CustomMetadataTypeApiName, Description, DeveloperName, Language, MasterLabel  FROM TaxEngineProvider",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "TaxEngine": {
+    "sobject": "TaxEngine",
+    "configs": [
+      {
+        "query": "SELECT Description, ExternalReference, MerchantCredential.DeveloperName, SellerCode, Status,TaxEngineAddress, TaxEngineCity, TaxEngineCountry, TaxEngineGeocodeAccuracy,  TaxEngineLatitude,TaxEngineLongitude, TaxEngineName, TaxEnginePostalCode, TaxEngineProvider.DeveloperName, TaxEngineState, TaxEngineStreet, TaxPrvdAccountIdentifier, Type  FROM TaxEngine ",
+        "externalIdField": "TaxEngineName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "TaxPolicy": {
+    "sobject": "TaxPolicy",
+    "configs": [
+      {
+        "query": "SELECT Description, Name, Status, TreatmentSelection FROM TaxPolicy WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {
+          "Status": "Draft"
+        },
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      },
+      {
+        "query": "SELECT DefaultTaxTreatment.Name, Description, Name, Status, TreatmentSelection FROM TaxPolicy WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "DefaultTaxTreatment",
+            "sobject": "TaxTreatment",
+            "externalId": "Name",
+            "targetField": "DefaultTaxTreatmentId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "TaxTreatment": {
+    "sobject": "TaxTreatment",
+    "configs": [
+      {
+        "query": "SELECT Description, IsTaxable, LegalEntity.Name, Name, ProductCode, Status, TaxCode, TaxPolicy.Name, TaxEngine.TaxEngineName FROM TaxTreatment WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "LegalEntity",
+            "sobject": "LegalEntity",
+            "externalId": "Name",
+            "targetField": "LegalEntityId"
+          },
+          {
+            "field": "TaxPolicy",
+            "sobject": "TaxPolicy",
+            "externalId": "Name",
+            "targetField": "TaxPolicyId"
+          }
+        ],
+        "overrides": {},
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "BillingPolicy": {
+    "sobject": "BillingPolicy",
+    "configs": [
+      {
+        "query": "SELECT BillingTreatmentSelection, Description, Name, Status FROM BillingPolicy WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {
+          "Status": "Draft"
+        },
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      },
+      {
+        "query": "SELECT BillingTreatmentSelection, DefaultBillingTreatment.Name, Description, Name, Status FROM BillingPolicy WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "DefaultBillingTreatment",
+            "sobject": "BillingTreatment",
+            "externalId": "Name",
+            "targetField": "DefaultBillingTreatmentId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "BillingTreatment": {
+    "sobject": "BillingTreatment",
+    "configs": [
+      {
+        "query": "SELECT BillingPolicy.Name, Description, ExcludeFromBilling, LegalEntity.Name, Name, Status FROM BillingTreatment WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "BillingPolicy",
+            "sobject": "BillingPolicy",
+            "externalId": "Name",
+            "targetField": "BillingPolicyId"
+          },
+          {
+            "field": "LegalEntity",
+            "sobject": "LegalEntity",
+            "externalId": "Name",
+            "targetField": "LegalEntityId"
+          }
+        ],
+        "overrides": {
+          "Status": "Draft"
+        },
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      },
+      {
+        "query": "SELECT BillingPolicy.Name, Description, ExcludeFromBilling, LegalEntity.Name, Name, Status FROM BillingTreatment WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "BillingPolicy",
+            "sobject": "BillingPolicy",
+            "externalId": "Name",
+            "targetField": "BillingPolicyId"
+          },
+          {
+            "field": "LegalEntity",
+            "sobject": "LegalEntity",
+            "externalId": "Name",
+            "targetField": "LegalEntityId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "BillingTreatmentItem": {
+    "sobject": "BillingTreatmentItem",
+    "configs": [
+      {
+        "query": "SELECT BillingTreatment.Name, BillingType, Controller, Description, FlatAmount, Handling0Amount, Name, Percentage, ProcessingOrder, Sequencing, Status, Type FROM BillingTreatmentItem WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "BillingTreatment",
+            "sobject": "BillingTreatment",
+            "externalId": "Name",
+            "targetField": "BillingTreatmentId"
+          }
+        ],
+        "overrides": {},
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductSpecificationType": {
+    "sobject": "ProductSpecificationType",
+    "configs": [
+      {
+        "query": "SELECT Description, DeveloperName, MasterLabel FROM ProductSpecificationType",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductSpecificationRecType": {
+    "sobject": "ProductSpecificationRecType",
+    "configs": [
+      {
+        "query": "SELECT DeveloperName, IsCommercial, IsDeleted, Language, MasterLabel, ProductSpecificationType, RecordType.DeveloperName FROM ProductSpecificationRecType",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "RecordType",
+            "sobject": "RecordType",
+            "externalId": "DeveloperName",
+            "targetField": "RecordTypeId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "Product2": {
+    "sobject": "Product2",
+    "configs": [
+      {
+        "query": "SELECT RecordType.DeveloperName, CurrencyIsoCode, UnitOfMeasure.Name, AvailabilityDate, BasedOn.Code, BillingPolicy.Name, ConfigureDuringSale, Description, DiscontinuedDate, DisplayUrl, EndOfLifeDate, ExternalId, Family, HelpText, IsActive, IsAssetizable, IsSoldOnlyWithOtherProds, Name, ProductCode, QuantityUnitOfMeasure, StockKeepingUnit, TaxPolicy.Name, Type, UsageModelType FROM Product2 WHERE  StockKeepingUnit != null",
+        "externalIdField": "StockKeepingUnit",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "RecordType",
+            "sobject": "RecordType",
+            "externalId": "DeveloperName",
+            "targetField": "RecordTypeId"
+          },
+          {
+            "field": "UnitOfMeasure",
+            "sobject": "UnitOfMeasure",
+            "externalId": "Name",
+            "targetField": "UnitOfMeasureId"
+          },
+          {
+            "field": "BasedOn",
+            "sobject": "ProductClassification",
+            "externalId": "Code",
+            "targetField": "BasedOnId"
+          },
+          {
+            "field": "BillingPolicy",
+            "sobject": "BillingPolicy",
+            "externalId": "Name",
+            "targetField": "BillingPolicyId"
+          },
+          {
+            "field": "TaxPolicy",
+            "sobject": "TaxPolicy",
+            "externalId": "Name",
+            "targetField": "TaxPolicyId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductAttributeDefinition": {
+    "sobject": "ProductAttributeDefinition",
+    "configs": [
+      {
+        "query": "SELECT Id, Name, TYPEOF OverrideContext WHEN Product2 THEN StockKeepingUnit END, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Sequence, Status, StepValue, ValueDescription, CurrencyIsoCode, AttributeCategory.Code, AttributeDefinition.Code, ProductClassificationAttribute.AttributeCategory.Code, ProductClassificationAttribute.AttributeDefinition.Code, ProductClassificationAttribute.ProductClassification.Code,Product2.StockKeepingUnit FROM ProductAttributeDefinition WHERE Product2.StockKeepingUnit != null",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeDefinitionId",
+            "Product2Id",
+            "ProductClassificationAttributeId"
+          ],
+          "optional": [
+            "AttributeCategoryId",
+            "OverrideContextId"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "OverrideContext",
+            "targetField": "OverrideContextId",
+            "polymorphicConfig": {
+              "Product2": {
+                "sobject": "Product2",
+                "externalIdField": "StockKeepingUnit"
+              }
+            }
+          },
+          {
+            "field": "AttributeCategory",
+            "sobject": "AttributeCategory",
+            "externalId": "Code",
+            "targetField": "AttributeCategoryId"
+          },
+          {
+            "field": "AttributeDefinition",
+            "sobject": "AttributeDefinition",
+            "externalId": "Code",
+            "targetField": "AttributeDefinitionId"
+          },
+          {
+            "field": "ProductClassificationAttribute",
+            "sobject": "ProductClassificationAttr",
+            "targetField": "ProductClassificationAttributeId",
+            "targetSobjectCompositeKey": {
+              "required": [
+                "AttributeDefinition.Code",
+                "ProductClassification.Code"
+              ],
+              "optional": [
+                "AttributeCategory.Code"
+              ]
+            }
+          },
+          {
+            "field": "Product2",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "Product2Id"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttrPicklistExcludedValue": {
+    "sobject": "AttrPicklistExcludedValue",
+    "configs": [
+      {
+        "query": "SELECT\n  Id, Name, AttributePicklistValue.Code,\n  TYPEOF Attribute\n    WHEN ProductAttributeDefinition THEN ProductClassificationAttributeId, Product2.StockKeepingUnit, AttributeDefinition.Code, ProductClassificationAttribute.ProductClassification.Code, ProductClassificationAttribute.AttributeDefinition.Code, ProductClassificationAttribute.AttributeCategory.Code\n    WHEN ProductClassificationAttr THEN AttributeDefinition.Code, ProductClassification.Code, AttributeCategory.Code\n  END\nFROM AttrPicklistExcludedValue\n  ",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeId",
+            "AttributePicklistValueId"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "Attribute",
+            "targetField": "AttributeId",
+            "polymorphicConfig": {
+              "ProductAttributeDefinition": {
+                "sobject": "ProductAttributeDefinition",
+                "compositeKey": {
+                  "required": [
+                    "AttributeDefinition.Code",
+                    "Product2.StockKeepingUnit",
+                    "ProductClassificationAttribute.AttributeDefinition.Code",
+                    "ProductClassificationAttribute.ProductClassification.Code"
+                  ],
+                  "optional": [
+                    "ProductClassificationAttribute.AttributeCategory.Code"
+                  ]
+                },
+                "lookups": [
+                  {
+                    "field": "ProductClassificationAttribute",
+                    "sobject": "ProductClassificationAttr",
+                    "targetField": "ProductClassificationAttributeId",
+                    "targetSobjectCompositeKey": {
+                      "required": [
+                        "AttributeDefinition.Code",
+                        "ProductClassification.Code"
+                      ],
+                      "optional": [
+                        "AttributeCategory.Code"
+                      ]
+                    }
+                  },
+                  {
+                    "field": "Product2",
+                    "sobject": "Product2",
+                    "externalId": "StockKeepingUnit",
+                    "targetField": "Product2Id"
+                  },
+                  {
+                    "field": "AttributeDefinition",
+                    "sobject": "AttributeDefinition",
+                    "externalId": "Code",
+                    "targetField": "AttributeDefinitionId"
+                  }
+                ]
+              },
+              "ProductClassificationAttr": {
+                "sobject": "ProductClassificationAttr",
+                "compositeKey": {
+                  "required": [
+                    "AttributeDefinition.Code",
+                    "ProductClassification.Code"
+                  ],
+                  "optional": [
+                    "AttributeCategory.Code"
+                  ]
+                },
+                "lookups": [
+                  {
+                    "field": "AttributeDefinition",
+                    "sobject": "AttributeDefinition",
+                    "externalId": "Code",
+                    "targetField": "AttributeDefinitionId"
+                  },
+                  {
+                    "field": "ProductClassification",
+                    "sobject": "ProductClassification",
+                    "externalId": "Code",
+                    "targetField": "ProductClassificationId"
+                  },
+                  {
+                    "field": "AttributeCategory",
+                    "sobject": "AttributeCategory",
+                    "externalId": "Code",
+                    "targetField": "AttributeCategoryId"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "field": "AttributePicklistValue",
+            "sobject": "AttributePicklistValue",
+            "externalId": "Code",
+            "targetField": "AttributePicklistValueId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "Product2DataTranslation": {
+    "sobject": "Product2DataTranslation",
+    "configs": [
+      {
+        "query": "SELECT Name, Parent.StockKeepingUnit, Language FROM Product2DataTranslation WHERE Name != null",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "Parent.StockKeepingUnit",
+            "Language"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "Parent",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ParentId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "CostBook": {
+    "sobject": "CostBook",
+    "configs": [
+      {
+        "query": "SELECT Name, EffectiveFrom, EffectiveTo, IsDefault FROM CostBook WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "CostBookEntry": {
+    "sobject": "CostBookEntry",
+    "configs": [
+      {
+        "query": "SELECT Cost, CostBook.Name, Product.StockKeepingUnit, CurrencyIsoCode, Description, EffectiveFrom, EffectiveTo  FROM CostBookEntry",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "CostBook.Name",
+            "Product.StockKeepingUnit"
+          ],
+          "optional": [
+            "CurrencyIsoCode"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "Product",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ProductId"
+          },
+          {
+            "field": "CostBook",
+            "sobject": "CostBook",
+            "externalId": "Name",
+            "targetField": "CostBookId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "Pricebook2": {
+    "sobject": "Pricebook2",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, CostBook.Name, Description, IsActive, Name, ValidFrom, ValidTo FROM Pricebook2 WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "CostBook",
+            "sobject": "CostBook",
+            "externalId": "Name",
+            "targetField": "CostBookId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProrationPolicy": {
+    "sobject": "ProrationPolicy",
+    "configs": [
+      {
+        "query": "SELECT ArePartialPeriodsAllowed, Name, ProrationPolicyType, RemainderStrategy FROM ProrationPolicy WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductSellingModel": {
+    "sobject": "ProductSellingModel",
+    "configs": [
+      {
+        "query": "SELECT Name, PricingTerm, PricingTermUnit, SellingModelType, Status FROM ProductSellingModel ",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductSellingModelOption": {
+    "sobject": "ProductSellingModelOption",
+    "configs": [
+      {
+        "query": "SELECT IsDefault, Product2.StockKeepingUnit, ProductSellingModel.Name, ProrationPolicy.Name FROM ProductSellingModelOption WHERE Product2. Product2.StockKeepingUnit != null",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ProductSellingModel.Name",
+            "Product2.StockKeepingUnit"
+          ],
+          "optional": [
+            "ProrationPolicy.Name"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "Product2",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "Product2Id"
+          },
+          {
+            "field": "ProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ProductSellingModelId"
+          },
+          {
+            "field": "ProrationPolicy",
+            "sobject": "ProrationPolicy",
+            "externalId": "Name",
+            "targetField": "ProrationPolicyId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "PricebookEntry": {
+    "sobject": "PricebookEntry",
+    "configs": [
+      {
+        "query": "SELECT IsActive, CurrencyIsoCode, Pricebook2.Name, Product2.StockKeepingUnit, ProductSellingModel.Name, UnitPrice, UseStandardPrice FROM PricebookEntry WHERE Product2.StockKeepingUnit != null ORDER BY CreatedDate ASC, Pricebook2Id ASC",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ProductSellingModel.Name",
+            "Product2.StockKeepingUnit",
+            "Pricebook2.Name"
+          ],
+          "optional": [
+            "CurrencyIsoCode"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "Product2",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "Product2Id"
+          },
+          {
+            "field": "ProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ProductSellingModelId"
+          },
+          {
+            "field": "Pricebook2",
+            "sobject": "Pricebook2",
+            "externalId": "Name",
+            "targetField": "Pricebook2Id"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductCatalog": {
+    "sobject": "ProductCatalog",
+    "configs": [
+      {
+        "query": "SELECT Name, Code, CurrencyIsoCode, CatalogType, Description, EffectiveEndDate,EffectiveStartDate FROM ProductCatalog WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductCategory": {
+    "sobject": "ProductCategory",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, Catalog.Code, Code, Description, IsNavigational, Name, ParentCategory.Code, SortOrder FROM ProductCategory WHERE Code != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "Catalog",
+            "sobject": "ProductCatalog",
+            "externalId": "Code",
+            "targetField": "CatalogId"
+          },
+          {
+            "field": "ParentCategory",
+            "sobject": "ProductCategory",
+            "externalId": "Code",
+            "targetField": "ParentCategoryId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductCategoryDataTranslation": {
+    "sobject": "ProductCategoryDataTranslation",
+    "configs": [
+      {
+        "query": "SELECT Name, Parent.Code, Language FROM ProductCategoryDataTranslation",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "Parent.Code",
+            "Language"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductCategoryProduct": {
+    "sobject": "ProductCategoryProduct",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, ProductCategory.Code, Product.StockKeepingUnit FROM ProductCategoryProduct WHERE Product.StockKeepingUnit != null AND ProductCategory.Code != null",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ProductCategory.Code",
+            "Product.StockKeepingUnit"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "ProductCategory",
+            "sobject": "ProductCategory",
+            "externalId": "Code",
+            "targetField": "ProductCategoryId"
+          },
+          {
+            "field": "Product",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ProductId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductComponentGroup": {
+    "sobject": "ProductComponentGroup",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, Code, Description, MaxBundleComponents, MinBundleComponents, Name, ParentGroup.Code, ParentProduct.StockKeepingUnit, Sequence FROM ProductComponentGroup WHERE Code != null AND ParentProduct.StockKeepingUnit != null",
+        "externalIdField": "Code",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "ParentGroup",
+            "sobject": "ProductComponentGroup",
+            "externalId": "Code",
+            "targetField": "ParentGroupId"
+          },
+          {
+            "field": "ParentProduct",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ParentProductId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductComponentGrpOverride": {
+    "sobject": "ProductComponentGrpOverride",
+    "configs": [
+      {
+        "query": "Select OverrideContext.Name, ProductComponentGroup.Code, IsExcluded, IsDeleted, MaxBundleComponents, MinBundleComponents,Name FROM ProductComponentGrpOverride",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "OverrideContext.Name",
+            "ProductComponentGroup.Code"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductRelatedComponent": {
+    "sobject": "ProductRelatedComponent",
+    "configs": [
+      {
+        "query": "SELECT ChildProductClassification.Code,ChildProduct.StockKeepingUnit, ChildSellingModel.Name, DoesBundlePriceIncludeChild,IsComponentRequired, IsDefaultComponent, IsQuantityEditable, MaxQuantity, MinQuantity, ParentProduct.StockKeepingUnit, ParentSellingModel.Name, ProductComponentGroup.Code, ProductRelationshipType.Name, Quantity,QuantityScaleMethod, Sequence FROM ProductRelatedComponent WHERE ParentProduct.StockKeepingUnit != null",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ParentProduct.StockKeepingUnit",
+            "ProductComponentGroup.Code",
+            "ProductRelationshipType.Name"
+          ],
+          "optional": [
+            "ChildProductClassification.Code",
+            "ChildProduct.StockKeepingUnit",
+            "ChildSellingModel.Name",
+            "ParentSellingModel.Name"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "ChildProductClassification",
+            "sobject": "ProductClassification",
+            "externalId": "Code",
+            "targetField": "ChildProductClassificationId"
+          },
+          {
+            "field": "ChildProduct",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ChildProductId"
+          },
+          {
+            "field": "ChildSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ChildSellingModelId"
+          },
+          {
+            "field": "ParentProduct",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ParentProductId"
+          },
+          {
+            "field": "ParentSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ParentSellingModelId"
+          },
+          {
+            "field": "ProductComponentGroup",
+            "sobject": "ProductComponentGroup",
+            "externalId": "Code",
+            "targetField": "ProductComponentGroupId"
+          },
+          {
+            "field": "ProductRelationshipType",
+            "sobject": "ProductRelationshipType",
+            "externalId": "Name",
+            "targetField": "ProductRelationshipTypeId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductRelComponentOverride": {
+    "sobject": "ProductRelComponentOverride",
+    "configs": [
+      {
+        "query": "Select OverrideContext.Name, ProductRelatedComponent.ParentProduct.StockKeepingUnit, ProductRelatedComponent.ProductComponentGroup.Code, ProductRelatedComponent.ProductRelationshipType.Name,ProductRelatedComponent.ChildProductClassification.Code, ProductRelatedComponent.ChildProduct.StockKeepingUnit, ProductRelatedComponent.ChildSellingModel.Name, ProductRelatedComponent.ParentSellingModel.Name, DoesBundlePriceIncludeChild,IsComponentRequired,IsDefaultComponent,IsExcluded,IsQuantityEditable,MaxQuantity,MinQuantity,Name,Quantity FROM ProductRelComponentOverride",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "OverrideContext.Name",
+            "ProductRelatedComponentId"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "OverrideContext",
+            "sobject": "Product2",
+            "externalId": "Name",
+            "targetField": "OverrideContextId"
+          },
+          {
+            "field": "ProductRelatedComponent",
+            "sobject": "ProductRelatedComponent",
+            "targetField": "ProductRelatedComponentId",
+            "targetSobjectCompositeKey": {
+              "required": [
+                "ParentProduct.StockKeepingUnit",
+                "ProductComponentGroup.Code",
+                "ProductRelationshipType.Name"
+              ],
+              "optional": [
+                "ChildProductClassification.Code",
+                "ChildProduct.StockKeepingUnit",
+                "ChildSellingModel.Name",
+                "ParentSellingModel.Name"
+              ]
+            }
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "PriceAdjustmentSchedule": {
+    "sobject": "PriceAdjustmentSchedule",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, AdjustmentMethod, Description, EffectiveFrom, EffectiveTo, IsActive, Name, Pricebook2.Name, ScheduleType FROM PriceAdjustmentSchedule WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "Pricebook2",
+            "sobject": "Pricebook2",
+            "externalId": "Name",
+            "targetField": "Pricebook2Id"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "PriceAdjustmentTier": {
+    "sobject": "PriceAdjustmentTier",
+    "configs": [
+      {
+        "query": "SELECT AdjustmentType, CurrencyIsoCode, EffectiveFrom, EffectiveTo, LowerBound, PriceAdjustmentSchedule.Name , Product2.StockKeepingUnit, ProductSellingModel.Name, TierType, TierValue, UpperBound FROM PriceAdjustmentTier",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "PriceAdjustmentSchedule.Name",
+            "Product2.StockKeepingUnit"
+          ],
+          "optional": [
+            "ProductSellingModel.Name",
+            "CurrencyIsoCode"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "PriceAdjustmentSchedule",
+            "sobject": "PriceAdjustmentSchedule",
+            "externalId": "Name",
+            "targetField": "PriceAdjustmentScheduleId"
+          },
+          {
+            "field": "Product2",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "Product2Id"
+          },
+          {
+            "field": "ProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ProductSellingModelId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "BundleBasedAdjustment": {
+    "sobject": "BundleBasedAdjustment",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, AdjustmentType, AdjustmentValue, EffectiveFrom, EffectiveTo, ParentProduct.StockKeepingUnit, ParentProductSellingModel.Name, PriceAdjustmentSchedule.Name, Product.StockKeepingUnit, ProductSellingModel.Name, RootBundle.StockKeepingUnit, RootProductSellingModel.Name FROM BundleBasedAdjustment",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "PriceAdjustmentSchedule.Name",
+            "ParentProduct.StockKeepingUnit",
+            "Product.StockKeepingUnit"
+          ],
+          "optional": [
+            "ParentProductSellingModel.Name",
+            "ProductSellingModel.Name",
+            "RootProductSellingModel.Name",
+            "CurrencyIsoCode"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "PriceAdjustmentSchedule",
+            "sobject": "PriceAdjustmentSchedule",
+            "externalId": "Name",
+            "targetField": "PriceAdjustmentScheduleId"
+          },
+          {
+            "field": "ParentProduct",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ParentProductId"
+          },
+          {
+            "field": "ParentProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ParentProductSellingModelId"
+          },
+          {
+            "field": "Product",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ProductId"
+          },
+          {
+            "field": "ProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "ProductSellingModelId"
+          },
+          {
+            "field": "RootBundle",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "RootBundleId"
+          },
+          {
+            "field": "RootProductSellingModel",
+            "sobject": "ProductSellingModel",
+            "externalId": "Name",
+            "targetField": "RootProductSellingModelId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeBasedAdjRule": {
+    "sobject": "AttributeBasedAdjRule",
+    "configs": [
+      {
+        "query": "SELECT Name FROM AttributeBasedAdjRule WHERE Name != null",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeAdjustmentCondition": {
+    "sobject": "AttributeAdjustmentCondition",
+    "configs": [
+      {
+        "query": "SELECT AttributeBasedAdjRule.Name, AttributeDefinition.Code, BooleanValue, DateValue, DateTimeValue, DoubleValue, IntegerValue, Operator, Product.StockKeepingUnit, StringValue FROM AttributeAdjustmentCondition",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeBasedAdjRule.Name",
+            "AttributeDefinition.Code",
+            "Product.StockKeepingUnit"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "AttributeBasedAdjRule",
+            "sobject": "AttributeBasedAdjRule",
+            "externalId": "Name",
+            "targetField": "AttributeBasedAdjRuleId"
+          },
+          {
+            "field": "AttributeDefinition",
+            "sobject": "AttributeDefinition",
+            "externalId": "Code",
+            "targetField": "AttributeDefinitionId"
+          },
+          {
+            "field": "Product",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ProductId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "AttributeBasedAdjustment": {
+    "sobject": "AttributeBasedAdjustment",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, AdjustmentType, AdjustmentValue, AttributeBasedAdjRule.Name, EffectiveFrom, EffectiveTo, PriceAdjustmentSchedule.Name, Product.StockKeepingUnit, ProductSellingModel.Name FROM AttributeBasedAdjustment",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "AttributeBasedAdjRule.Name",
+            "PriceAdjustmentSchedule.Name",
+            "Product.StockKeepingUnit"
+          ],
+          "optional": [
+            "CurrencyIsoCode",
+            "ProductSellingModel.Name"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductConfigurationFlow": {
+    "sobject": "ProductConfigurationFlow",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, FlowIdentifier, Status, IsDefault FROM ProductConfigurationFlow  WHERE FlowIdentifier != null",
+        "externalIdField": "FlowIdentifier",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": "insert-only",
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductConfigFlowAssignment": {
+    "sobject": "ProductConfigFlowAssignment",
+    "configs": [
+      {
+        "query": "SELECT ProductClassification.Code, ProductConfigurationFlow.FlowIdentifier, Product.StockKeepingUnit, CurrencyIsoCode FROM ProductConfigFlowAssignment",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ProductConfigurationFlow.FlowIdentifier"
+          ],
+          "optional": [
+            "ProductClassification.Code",
+            "Product.StockKeepingUnit"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "ProductClassification",
+            "sobject": "ProductClassification",
+            "externalId": "Code",
+            "targetField": "ProductClassificationId"
+          },
+          {
+            "field": "ProductConfigurationFlow",
+            "sobject": "ProductConfigurationFlow",
+            "externalId": "FlowIdentifier",
+            "targetField": "ProductConfigurationFlowId"
+          },
+          {
+            "field": "Product",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit",
+            "targetField": "ProductId"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductFulfillmentDecompRule": {
+    "sobject": "ProductFulfillmentDecompRule",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, DestinationProduct.StockKeepingUnit, Name, Priority, SourceProductClassification.Code, SourceProduct.StockKeepingUnit FROM ProductFulfillmentDecompRule",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ValTfrmGrp": {
+    "sobject": "ValTfrmGrp",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, DestinationPrimitiveType, IsDestinationEnumerated, IsSourceEnumerated, Name, SourcePrimitiveType, UsageType FROM ValTfrmGrp",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ValTfrm": {
+    "sobject": "ValTfrm",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, InputDate, InputDatetime, InputNumber, InputPicklistValue.Code, InputString, IsInputBoolean, IsOutputBoolean, OutputDate, OutputDatetime, OutputNumber, OutputPicklistValue.Code, OutputString, ValueTransformGroup.Name FROM ValTfrm",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ValueTransformGroup.Name",
+            "OutputPicklistValue.Code",
+            "InputPicklistValue.Code"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductDecompEnrichmentRule": {
+    "sobject": "ProductDecompEnrichmentRule",
+    "configs": [
+      {
+        "query": "SELECT TYPEOF CalculationDefinition WHEN DecisionMatrixDefinition THEN DeveloperName WHEN ExpressionSet THEN ApiName END, CalculationMethod, CurrencyIsoCode, DecompositionRule.Name, DestinationApiName, DestinationAttributeDefinition.Code, DestinationContextTag, DestinationType, ListMappingGroup.Name, SourceApiName, SourceAttributeDefinition.Code, SourceContextTag, SourceType FROM ProductDecompEnrichmentRule",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "DecompositionRule.Name"
+          ],
+          "optional": [
+            "DestinationAttributeDefinition.Code",
+            "CalculationDefinition",
+            "SourceAttributeDefinition.Code",
+            "ListMappingGroup.Name"
+          ]
+        },
+        "lookups": [
+          {
+            "field": "CalculationDefinition",
+            "targetField": "CalculationDefinitionId",
+            "polymorphicConfig": {
+              "DecisionMatrixDefinition": {
+                "sobject": "DecisionMatrixDefinition",
+                "externalIdField": "DeveloperName"
+              },
+              "ExpressionSet": {
+                "sobject": "ExpressionSet",
+                "externalIdField": "ApiName"
+              }
+            }
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProdtDecompEnrchVarMap": {
+    "sobject": "ProdtDecompEnrchVarMap",
+    "configs": [
+      {
+        "query": "SELECT AttributeDefinition.Code, CurrencyIsoCode, ExpressionSetVarName, FieldContextTagName, ProductDecompEnrichmentRule.Name, VariableType FROM ProdtDecompEnrchVarMap",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "ProductDecompEnrichmentRule.Name"
+          ],
+          "optional": [
+            "AttributeDefinition.Code",
+            "FieldContextTagName"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "FulfillmentStepDefinitionGroup": {
+    "sobject": "FulfillmentStepDefinitionGroup",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, Name, UsageType FROM FulfillmentStepDefinitionGroup",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "OmniUiCardConfig": {
+    "sobject": "OmniUiCardConfig",
+    "configs": [
+      {
+        "query": "SELECT DeveloperName, Language, MasterLabel  FROM OmniUiCardConfig",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "OmniIntegrationProcConfig": {
+    "sobject": "OmniIntegrationProcConfig",
+    "configs": [
+      {
+        "query": "SELECT DeveloperName, Language, MasterLabel,  FROM OmniIntegrationProcConfig",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "IntegrationProviderDef": {
+    "sobject": "IntegrationProviderDef",
+    "configs": [
+      {
+        "query": "SELECT ApexClass.Name, CanUseInIntegrationOrch, Description, DeveloperName, ExternalServiceOperationName, FileBasedApexClass, FileBasedExternalService, FileBasedInputDataProcessor, FileBasedOmniUiCard, FileBasedOutputDataProcessor, InputDataProcessor.DeveloperName, IsActive, IsManual, IsServiceTypeIntegration, JavaClassName, Language, MasterLabel, NamespacePrefix, OmniUiCardConfig.DeveloperName, OutputDataProcessor.DeveloperName, StorePayload, Type FROM IntegrationProviderDef",
+        "externalIdField": "DeveloperName",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "FulfillmentStepDefinition": {
+    "sobject": "FulfillmentStepDefinition",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, CustomFulfillmentScope, FlowDefinitionName, IsSkipBranch, Name, OmniscriptName , StepDefinitionGroup.Name FROM FulfillmentStepDefinition",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "FulfillmentStepDependencyDef": {
+    "sobject": "FulfillmentStepDependencyDef",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, DependencyScope, DependsOnStepDefinition.Name, FulfillmentStepDefinition.Name, Name FROM FulfillmentStepDependencyDef",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "DependsOnStepDefinition.Name",
+            "FulfillmentStepDefinition.Name"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "FulfillmentWorkspace": {
+    "sobject": "FulfillmentWorkspace",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, Description, Name FROM FulfillmentWorkspace",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "FulfillmentWorkspaceItem": {
+    "sobject": "FulfillmentWorkspaceItem",
+    "configs": [
+      {
+        "query": "SELECT CurrencyIsoCode, FulfillmentStepDefinitionGroup.Name, FulfillmentWorkspace.Name, ShowOrder FROM FulfillmentWorkspaceItem",
+        "externalIdField": null,
+        "compositeKey": {
+          "required": [
+            "FulfillmentStepDefinitionGroup.Name",
+            "FulfillmentWorkspace.Name"
+          ]
+        },
+        "lookups": [],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  },
+  "ProductFulfillmentScenario": {
+    "sobject": "ProductFulfillmentScenario",
+    "configs": [
+      {
+        "query": "SELECT Action, SourceIdentifier, CurrencyIsoCode, FulfillmentStepDefnGroup.Name, Name, ProductClassification.Code , Product.StockKeepingUnit, Type FROM ProductFulfillmentScenario",
+        "externalIdField": "Name",
+        "compositeKey": null,
+        "lookups": [
+          {
+            "field": "FulfillmentStepDefnGroup",
+            "targetField": "FulfillmentStepDefnGroupId",
+            "sobject": "FulfillmentStepDefinitionGroup",
+            "externalId": "Name"
+          },
+          {
+            "field": "ProductClassification",
+            "targetField": "ProductClassificationId",
+            "sobject": "ProductClassification",
+            "externalId": "Code"
+          },
+          {
+            "field": "Product",
+            "targetField": "ProductId",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit"
+          },
+          {
+            "field": "SourceIdentifier",
+            "targetField": "SourceIdentifier",
+            "sobject": "Product2",
+            "externalId": "StockKeepingUnit"
+          }
+        ],
+        "overrides": {},
+        "mode": null,
+        "preQueries": [],
+        "useRestApi": false,
+        "binaryFields": [],
+        "fieldsToExclude": []
+      }
+    ]
+  }
+}

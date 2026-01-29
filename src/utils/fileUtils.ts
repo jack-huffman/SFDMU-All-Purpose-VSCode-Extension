@@ -258,7 +258,30 @@ export async function saveConfiguration(
   // Check for conflict
   const exists = await pathExists(configPath);
   if (exists && !conflictResolution) {
-    return { saved: false, conflict: true };
+    // Load the existing config to check if it's the same one being saved
+    try {
+      const existingContent = await fs.readFile(configPath, 'utf8');
+      const existingConfig = JSON.parse(existingContent) as MigrationConfig;
+      
+      // Compare key properties to determine if it's the same config
+      // If source/target orgs match, it's likely the same config
+      const isSameConfig = 
+        existingConfig.sourceOrg?.username === config.sourceOrg?.username &&
+        existingConfig.sourceOrg?.instanceUrl === config.sourceOrg?.instanceUrl &&
+        existingConfig.targetOrg?.username === config.targetOrg?.username &&
+        existingConfig.targetOrg?.instanceUrl === config.targetOrg?.instanceUrl &&
+        existingConfig.mode === config.mode;
+      
+      // If it's the same config, no conflict - allow saving (will overwrite)
+      if (!isSameConfig) {
+        // Different config with same name - conflict
+        return { saved: false, conflict: true };
+      }
+      // If it's the same config, continue with save (will overwrite the existing file)
+    } catch (error) {
+      // If we can't load the existing file, treat it as a conflict to be safe
+      return { saved: false, conflict: true };
+    }
   }
   
   let finalName = safeName;
@@ -279,9 +302,64 @@ export async function saveConfiguration(
     config.configName = fullConfigName;
   }
   
-  await fs.writeFile(finalPath, JSON.stringify(config, null, 2), 'utf8');
+  // Sanitize config before saving to ensure valid JSON
+  // Remove any circular references, functions, or undefined values
+  const sanitizedConfig = sanitizeForJSON(config);
+  
+  await fs.writeFile(finalPath, JSON.stringify(sanitizedConfig, null, 2), 'utf8');
   
   return { saved: true, finalName: finalName };
+}
+
+/**
+ * Sanitize an object for JSON serialization
+ * Removes circular references, functions, and undefined values
+ */
+function sanitizeForJSON(obj: any, seen = new WeakSet()): any {
+  // Handle null and primitives
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeForJSON(item, seen));
+  }
+  
+  // Handle circular references
+  if (seen.has(obj)) {
+    return null; // Replace circular reference with null
+  }
+  seen.add(obj);
+  
+  // Handle Date objects
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+  
+  // Handle plain objects
+  const sanitized: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      
+      // Skip undefined values
+      if (value === undefined) {
+        continue;
+      }
+      
+      // Skip functions
+      if (typeof value === 'function') {
+        continue;
+      }
+      
+      // Recursively sanitize nested objects
+      sanitized[key] = sanitizeForJSON(value, seen);
+    }
+  }
+  
+  seen.delete(obj);
+  return sanitized;
 }
 
 export async function loadConfiguration(
@@ -298,7 +376,24 @@ export async function loadConfiguration(
   }
   
   const content = await fs.readFile(fullPath, 'utf8');
-  return JSON.parse(content) as MigrationConfig;
+  
+  // Try to parse JSON - if there's trailing content, try to extract just the JSON
+  try {
+    return JSON.parse(content) as MigrationConfig;
+  } catch (error: any) {
+    // If parsing fails, try to extract just the first valid JSON object
+    // This handles cases where there might be trailing content
+    const jsonMatch = content.match(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        return JSON.parse(jsonMatch[1]) as MigrationConfig;
+      } catch (e) {
+        // If that also fails, throw the original error
+        throw new Error(`Invalid JSON in configuration file: ${error.message}`);
+      }
+    }
+    throw new Error(`Invalid JSON in configuration file: ${error.message}`);
+  }
 }
 
 export async function listConfigurations(

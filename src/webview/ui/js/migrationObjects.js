@@ -17,7 +17,9 @@
                 externalId: externalId,
                 phaseNumber: 1,
                 useCustomQuery: useCustomQuery,
-                soqlQuery: soqlQuery
+                soqlQuery: soqlQuery,
+                master: true, // Default to master mode
+                operation: State.currentConfig.operation || 'Upsert' // Default to global operation
             };
             
             State.currentConfig.objects.push(newObject);
@@ -138,6 +140,15 @@
                 const soqlTextarea = card.querySelector('.migration-textarea');
                 const soqlQuery = (soqlTextarea && soqlTextarea.value) || oldObj.soqlQuery || '';
                 
+                const masterCheckbox = card.querySelector('.master-slave-checkbox');
+                const master = masterCheckbox !== null
+                    ? !!masterCheckbox.checked
+                    : (oldObj.master !== undefined ? oldObj.master : true); // Default to true (master mode)
+                
+                // Get DML operation from dropdown (in Object Name section)
+                const dmlOperationSelect = card.querySelector('select[data-field="dmlOperation"]');
+                const operation = (dmlOperationSelect && dmlOperationSelect.value) || oldObj.operation || State.currentConfig.operation || 'Upsert';
+                
                 if (objectName) {
                     State.currentConfig.objects.push({
                         objectName: objectName,
@@ -148,7 +159,9 @@
                         selectedFields: oldObj.selectedFields,
                         whereClause: oldObj.whereClause,
                         orderByClause: oldObj.orderByClause,
-                        limitClause: oldObj.limitClause
+                        limitClause: oldObj.limitClause,
+                        master: master,
+                        operation: operation
                     });
                 }
             });
@@ -271,44 +284,42 @@
                     }
                 });
                 
-                // Create filter button (outside the 85% group)
-                const filterBtn = document.createElement('button');
-                filterBtn.className = 'migration-action-btn migration-filter-btn';
-                filterBtn.type = 'button';
-                const hasQueryModifications = obj.whereClause || obj.orderByClause || obj.limitClause;
-                filterBtn.title = hasQueryModifications ? 'Edit Query' : 'Modify Query';
-                filterBtn.innerHTML = `
-                    <span class="codicon codicon-edit" style="margin-right: 4px;"></span>
-                    Modify Query
-                `;
-                // Set initial button state
-                if (hasQueryModifications) {
-                    filterBtn.classList.add('has-filter');
-                    filterBtn.title = 'Edit Query';
-                } else {
-                    filterBtn.title = 'Modify Query';
-                }
-                
-                filterBtn.addEventListener('click', () => {
-                    if (window.SFDMU.Modals) {
-                        window.SFDMU.Modals.showObjectFilter(
-                            obj.objectName, 
-                            index, 
-                            obj.whereClause || '', 
-                            obj.orderByClause || '', 
-                            obj.limitClause || ''
-                        );
-                    }
+                // Create DML operation dropdown (where filter button used to be)
+                const dmlOperationSelect = document.createElement('select');
+                dmlOperationSelect.className = 'select-input';
+                dmlOperationSelect.dataset.field = 'dmlOperation';
+                dmlOperationSelect.style.width = 'auto';
+                dmlOperationSelect.style.height = '32px';
+                dmlOperationSelect.style.padding = '8px 16px';
+                dmlOperationSelect.style.fontSize = '12px';
+                dmlOperationSelect.style.borderRadius = '4px';
+                dmlOperationSelect.style.border = '1px solid var(--vscode-button-border)';
+                dmlOperationSelect.style.backgroundColor = 'var(--vscode-button-secondaryBackground)';
+                dmlOperationSelect.style.color = 'var(--vscode-button-secondaryForeground)';
+                dmlOperationSelect.style.flexShrink = '0';
+                dmlOperationSelect.style.whiteSpace = 'nowrap';
+                const dmlOptions = ['Upsert', 'Insert', 'Update', 'Delete', 'DeleteHierarchy', 'DeleteSource'];
+                dmlOptions.forEach(option => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = option;
+                    optionEl.textContent = option;
+                    dmlOperationSelect.appendChild(optionEl);
+                });
+                // Set the value from object operation, or fall back to global operation, or default to 'Upsert'
+                const objectOperation = obj.operation || State.currentConfig.operation || 'Upsert';
+                dmlOperationSelect.value = objectOperation;
+                dmlOperationSelect.addEventListener('change', () => {
+                    this.update();
                 });
                 
                 nameInputGroup.appendChild(nameInput);
                 nameInputGroup.appendChild(selectFieldsBtn);
                 
-                // Create a wrapper for the input group and filter button
+                // Create a wrapper for the input group and DML dropdown
                 const nameInputWrapper = document.createElement('div');
                 nameInputWrapper.className = 'migration-field-input-wrapper';
                 nameInputWrapper.appendChild(nameInputGroup);
-                nameInputWrapper.appendChild(filterBtn);
+                nameInputWrapper.appendChild(dmlOperationSelect);
                 
                 nameField.appendChild(nameLabel);
                 nameField.appendChild(nameInputWrapper);
@@ -357,10 +368,47 @@
                     }
                 });
                 
+                // Create filter button (moved to External ID section)
+                const filterBtn = document.createElement('button');
+                filterBtn.className = 'migration-action-btn migration-filter-btn';
+                filterBtn.type = 'button';
+                const hasQueryModifications = obj.whereClause || obj.orderByClause || obj.limitClause;
+                filterBtn.title = hasQueryModifications ? 'Edit Query' : 'Modify Query';
+                filterBtn.innerHTML = `
+                    <span class="codicon codicon-edit" style="margin-right: 4px;"></span>
+                    Modify Query
+                `;
+                // Set initial button state
+                if (hasQueryModifications) {
+                    filterBtn.classList.add('has-filter');
+                    filterBtn.title = 'Edit Query';
+                } else {
+                    filterBtn.title = 'Modify Query';
+                }
+                
+                filterBtn.addEventListener('click', () => {
+                    if (window.SFDMU.Modals) {
+                        window.SFDMU.Modals.showObjectFilter(
+                            obj.objectName, 
+                            index, 
+                            obj.whereClause || '', 
+                            obj.orderByClause || '', 
+                            obj.limitClause || ''
+                        );
+                    }
+                });
+                
                 externalIdGroup.appendChild(externalIdInput);
                 externalIdGroup.appendChild(selectExternalIdBtn);
+                
+                // Create a wrapper for the External ID input group and Modify Query button to match Object Name structure
+                const externalIdInputWrapper = document.createElement('div');
+                externalIdInputWrapper.className = 'migration-field-input-wrapper';
+                externalIdInputWrapper.appendChild(externalIdGroup);
+                externalIdInputWrapper.appendChild(filterBtn);
+                
                 externalIdField.appendChild(externalIdLabel);
-                externalIdField.appendChild(externalIdGroup);
+                externalIdField.appendChild(externalIdInputWrapper);
                 
                 const customQueryField = document.createElement('div');
                 customQueryField.className = 'migration-field';
@@ -379,6 +427,33 @@
                 customQueryLabel.appendChild(customQueryCheckbox);
                 customQueryLabel.appendChild(customQuerySpan);
                 customQueryField.appendChild(customQueryLabel);
+
+                // Master/Slave mode field
+                const masterSlaveField = document.createElement('div');
+                masterSlaveField.className = 'migration-field';
+                const masterSlaveLabel = document.createElement('label');
+                masterSlaveLabel.className = 'migration-checkbox-label';
+                const masterSlaveCheckbox = document.createElement('input');
+                masterSlaveCheckbox.type = 'checkbox';
+                masterSlaveCheckbox.className = 'migration-checkbox master-slave-checkbox';
+                // Default to true (master mode) if not specified
+                masterSlaveCheckbox.checked = obj.master !== undefined ? obj.master : true;
+                masterSlaveCheckbox.addEventListener('change', () => {
+                    this.update();
+                });
+                const masterSlaveSpan = document.createElement('span');
+                masterSlaveSpan.textContent = 'Parent object (uncheck for child mode)';
+                const masterSlaveHelp = document.createElement('span');
+                masterSlaveHelp.className = 'migration-help-text';
+                masterSlaveHelp.textContent = 'Child objects only fetch records related to previously selected parent objects';
+                masterSlaveHelp.style.display = 'block';
+                masterSlaveHelp.style.fontSize = '0.85em';
+                masterSlaveHelp.style.color = '#666';
+                masterSlaveHelp.style.marginTop = '4px';
+                masterSlaveLabel.appendChild(masterSlaveCheckbox);
+                masterSlaveLabel.appendChild(masterSlaveSpan);
+                masterSlaveField.appendChild(masterSlaveLabel);
+                masterSlaveField.appendChild(masterSlaveHelp);
                 
                 if (obj.useCustomQuery) {
                     const soqlField = document.createElement('div');
@@ -405,6 +480,7 @@
                 }
                 cardContent.appendChild(externalIdField);
                 cardContent.appendChild(customQueryField);
+                cardContent.appendChild(masterSlaveField);
                 
                 objectCard.appendChild(numberBadge);
                 objectCard.appendChild(cardContent);

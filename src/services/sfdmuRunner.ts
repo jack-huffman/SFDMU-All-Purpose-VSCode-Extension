@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { SFDMUResult } from '../models/migrationConfig';
 
 export async function runSFDMU(
@@ -7,7 +8,8 @@ export async function runSFDMU(
   sourceUsername: string,
   targetUsername: string,
   simulation: boolean = false,
-  onOutput?: (data: string) => void
+  onOutput?: (data: string) => void,
+  onPrompt?: (prompt: string) => Promise<string>
 ): Promise<SFDMUResult> {
   // Build command arguments
   const args = [
@@ -21,10 +23,12 @@ export async function runSFDMU(
     args.push('--simulation');
   }
   
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     let stdout = '';
     let stderr = '';
     let hasResolved = false;
+    let pendingPrompt: { resolve: (value: string) => void; reject: (error: Error) => void } | null = null;
+    let outputBuffer = ''; // Buffer to detect prompts across multiple data chunks
     
     // Use 'sf' as command and pass args array
     // Force unbuffered output by setting environment variables
@@ -44,11 +48,11 @@ export async function runSFDMU(
     const absolutePhaseDir = path.resolve(phaseDir);
     
     // Use shell mode to ensure proper output streaming
-    // This helps with programs that buffer output when not in a TTY
+    // Enable stdin for interactive prompts
     const childProcess = spawn('sf', args, {
       cwd: absolutePhaseDir, // Use absolute path to ensure we're in the correct directory
       shell: true, // Use shell to get better output streaming
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'], // Enable stdin for interactive prompts
       env: env
     });
     
@@ -59,22 +63,101 @@ export async function runSFDMU(
     if (childProcess.stderr) {
       childProcess.stderr.setEncoding('utf8');
     }
+    if (childProcess.stdin) {
+      childProcess.stdin.setDefaultEncoding('utf8');
+    }
+    
+    // Function to detect and handle prompts
+    const handleOutput = async (text: string) => {
+      stdout += text;
+      outputBuffer += text;
+      
+      // Send output immediately to callback
+      if (onOutput) {
+        onOutput(text);
+      }
+      
+      // Check for prompts in the output buffer
+      // Look for patterns like:
+      // "Continue the job (y/n) ? [n]:"
+      // "Command in progress... done"
+      // Any line ending with "? [y]:" or "? [n]:"
+      const promptPatterns = [
+        /Continue\s+the\s+job\s+\(y\/n\)\s*\?\s*\[([yn])\]:/i,
+        /\(y\/n\)\s*\?\s*\[([yn])\]:/i,
+        /\?\s*\[([yn])\]:/i
+      ];
+      
+      // Check each line in the buffer
+      const lines = outputBuffer.split('\n');
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i];
+        for (const pattern of promptPatterns) {
+          const match = line.match(pattern);
+          if (match && !pendingPrompt) {
+            // Found a prompt - clear buffer up to this point
+            outputBuffer = lines.slice(i + 1).join('\n');
+            
+            // Get default value from prompt
+            const defaultValue = match[1]?.toLowerCase() === 'y' ? 'y' : 'n';
+            
+            // Show VS Code prompt to user
+            pendingPrompt = { resolve: () => {}, reject: () => {} };
+            const promptPromise = new Promise<string>((resolvePrompt, rejectPrompt) => {
+              if (pendingPrompt) {
+                pendingPrompt.resolve = resolvePrompt;
+                pendingPrompt.reject = rejectPrompt;
+              }
+            });
+            
+            // Show QuickPick for y/n selection
+            const response = await vscode.window.showQuickPick(
+              [
+                { label: 'Yes (y)', value: 'y' },
+                { label: 'No (n)', value: 'n' }
+              ],
+              {
+                placeHolder: `SFDMU Prompt: ${line.trim()}`,
+                canPickMany: false,
+                ignoreFocusOut: true
+              }
+            );
+            
+            const answer = response?.value || defaultValue;
+            
+            // Send answer to stdin
+            if (childProcess.stdin && !childProcess.stdin.destroyed) {
+              childProcess.stdin.write(answer + '\n');
+            }
+            
+            // Resolve the prompt promise
+            if (pendingPrompt) {
+              pendingPrompt.resolve(answer);
+              pendingPrompt = null;
+            }
+            
+            // Add the answer to output for visibility
+            if (onOutput) {
+              onOutput(`\n> ${answer}\n`);
+            }
+            
+            break;
+          }
+        }
+      }
+    };
     
     // Capture stdout - handle data events
     if (childProcess.stdout) {
-      childProcess.stdout.on('data', (data: string | Buffer) => {
+      childProcess.stdout.on('data', async (data: string | Buffer) => {
         const text = typeof data === 'string' ? data : data.toString('utf8');
-        stdout += text;
-        if (onOutput) {
-          // Send output immediately without filtering
-          onOutput(text);
-        }
+        await handleOutput(text);
       });
     }
     
     // Capture stderr
     if (childProcess.stderr) {
-      childProcess.stderr.on('data', (data: string | Buffer) => {
+      childProcess.stderr.on('data', async (data: string | Buffer) => {
         const text = typeof data === 'string' ? data : data.toString('utf8');
         stderr += text;
         if (onOutput) {
@@ -168,5 +251,28 @@ function extractErrors(output: string): string[] {
   }
   
   return errors;
+}
+
+/**
+ * Check if SFDMU command has completed successfully
+ * Looks for the completion message pattern
+ */
+export function isSFDMUComplete(output: string): boolean {
+  // Look for completion patterns:
+  // "Command succeeded."
+  // "Execution of the command sfdmu:run has been completed. Exit code 0 (SUCCESS)."
+  const completionPatterns = [
+    /Command\s+succeeded/i,
+    /Execution\s+of\s+the\s+command\s+sfdmu:run\s+has\s+been\s+completed/i,
+    /Exit\s+code\s+0\s+\(SUCCESS\)/i
+  ];
+  
+  for (const pattern of completionPatterns) {
+    if (pattern.test(output)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 

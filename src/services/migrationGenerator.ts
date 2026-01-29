@@ -86,11 +86,20 @@ export async function generateMigrationFiles(config: MigrationConfig): Promise<v
       config.modifiedSince
     );
     
+    // Use per-object operation if available, otherwise fall back to global operation
+    const operation = obj.operation || config.operation || 'Upsert';
+    
     const scriptObject: any = {
       query: soqlQuery,
-      operation: config.operation,
+      operation: operation,
       externalId: obj.externalId
     };
+    
+    // Add master property only if it's false (slave mode)
+    // When master is true or undefined, omit it (default master behavior)
+    if (obj.master === false) {
+      scriptObject.master = false;
+    }
     
     exportJson.objects.push(scriptObject);
   }

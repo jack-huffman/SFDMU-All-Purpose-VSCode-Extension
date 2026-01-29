@@ -26,6 +26,7 @@ body {
     border-bottom: 1px solid var(--vscode-panel-border);
     background-color: var(--vscode-editor-background);
     flex-shrink: 0;
+    gap: 24px;
 }
 
 .header-bar h1 {
@@ -62,10 +63,73 @@ body {
     color: var(--vscode-input-placeholderForeground);
 }
 
+.header-org-selection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+}
+
+.header-org-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+}
+
+.header-org-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.header-org-selection .org-arrow {
+    margin-top: 20px; /* Align arrow with select boxes */
+    flex-shrink: 0;
+}
+
+.header-org-selection .org-select-wrapper {
+    width: 100%;
+}
+
+.header-org-selection .org-select {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.header-org-selection .org-label-with-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px; /* Match label + button row so Source and Target org items are same height */
+}
+
+.header-org-selection .org-refresh-icon {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.header-org-selection .org-refresh-icon:hover {
+    opacity: 1;
+}
+
 .header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .config-name-header {
@@ -521,8 +585,9 @@ body {
 .getting-started {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 40px 32px;
     background-color: var(--vscode-editor-background);
     color: var(--vscode-foreground);
@@ -586,104 +651,61 @@ body {
     text-decoration: underline;
 }
 
-.getting-started-create-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
+.getting-started-buttons {
     display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+}
+
+.getting-started-create-btn {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    z-index: 10;
+    gap: 12px;
+    padding: 24px 32px;
+    min-width: 200px;
+    max-width: 280px;
+    text-align: center;
+    position: relative;
 }
 
 .getting-started-create-btn .codicon {
-    font-size: 16px;
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
-/* Migration mode toggle (Objects vs CPQ) */
-/* Mode Toggle Switch */
-.mode-toggle-switch-container {
+.getting-started-create-btn span:not(.codicon) {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.getting-started-btn-description {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin: 0;
+    line-height: 1.4;
+    font-weight: normal;
+}
+
+/* Mode badge (read-only display of current mode) */
+.mode-badge {
     display: flex;
     align-items: center;
     margin-right: 12px;
-}
-
-.mode-toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 120px;
-    height: 28px;
-    cursor: pointer;
-}
-
-.mode-toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.mode-toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--vscode-button-secondaryBackground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 14px;
-    transition: 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 4px;
-}
-
-.mode-toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 68px;
-    left: 2px;
-    bottom: 2px;
-    background-color: var(--vscode-button-background);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    z-index: 1;
-}
-
-.mode-toggle-switch input:checked + .mode-toggle-slider {
-    background-color: var(--vscode-button-secondaryBackground);
-}
-
-.mode-toggle-switch input:checked + .mode-toggle-slider:before {
-    width: 50px;
-    left: 66px;
-}
-
-.mode-toggle-label {
-    font-size: 11px;
+    padding: 4px 12px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 600;
-    z-index: 2;
-    position: relative;
-    transition: color 0.3s;
-    pointer-events: none;
 }
 
-.mode-toggle-label-left {
-    color: var(--vscode-button-foreground);
-}
-
-.mode-toggle-label-right {
-    color: var(--vscode-foreground);
-}
-
-.mode-toggle-switch input:checked + .mode-toggle-slider .mode-toggle-label-left {
-    color: var(--vscode-foreground);
-}
-
-.mode-toggle-switch input:checked + .mode-toggle-slider .mode-toggle-label-right {
-    color: var(--vscode-button-foreground);
+.mode-badge-label {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .cpq-mode-container {
@@ -699,8 +721,715 @@ body {
 
 .cpq-run-phases {
     margin-top: 8px;
-    padding: 12px 0;
+    padding: 0;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* CPQ Phase Tabs */
+.cpq-phase-tabs {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editorGroupHeader-tabsBackground);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.cpq-phase-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.cpq-phase-tab:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.cpq-phase-tab.active {
+    border-bottom-color: var(--vscode-textLink-foreground);
+    color: var(--vscode-textLink-foreground);
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.cpq-phase-tab.completed {
+    opacity: 0.7;
+}
+
+.cpq-phase-tab.completed .cpq-phase-tab-check {
+    color: var(--vscode-testing-iconPassed);
+}
+
+.cpq-phase-tab-label {
+    display: inline-block;
+}
+
+.cpq-phase-tab-check {
+    font-size: 14px;
+}
+
+.cpq-phase-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* CPQ Phase Content */
+.cpq-phase-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.cpq-phase-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.cpq-phase-header-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.cpq-phase-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.cpq-phase-dml-operation {
+    display: flex;
+    align-items: center;
+}
+
+.cpq-phase-dml-select {
+    padding: 4px 12px;
+    font-size: 13px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 2px;
+    min-width: 100px;
+}
+
+.cpq-phase-dml-select:hover {
+    border-color: var(--vscode-inputOption-activeBorder);
+}
+
+.cpq-phase-dml-select:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
+.cpq-phase-header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    min-width: 32px;
+    height: 32px;
+}
+
+.cpq-phase-header-btn.icon-button {
+    padding: 6px;
+}
+
+.cpq-phase-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.cpq-phase-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.cpq-phase-objects-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cpq-phase-actions-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.cpq-phase-selected-records-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.cpq-phase-section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.cpq-phase-selected-records-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.cpq-phase-actions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.cpq-phase-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    position: relative;
+}
+
+.cpq-phase-action-badge {
+    margin-left: 6px;
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cpq-phase-action-btn.phase-completed-btn {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.cpq-phase-action-btn.phase-completed-btn:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+/* Selected Records Section */
+.cpq-phase-selected-records-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cpq-selected-records-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+}
+
+.cpq-selected-records-list-container {
+    max-height: 400px; /* Approximately 10 records at ~40px per record */
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    background-color: var(--vscode-editor-background);
+    padding: 8px;
+}
+
+.cpq-selected-records-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cpq-selected-records-list-container::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+    border-radius: 4px;
+}
+
+.cpq-selected-records-list-container::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+    border-radius: 4px;
+}
+
+.cpq-selected-records-list-container::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.cpq-selected-records-object-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.cpq-selected-records-object-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+}
+
+.cpq-selected-records-count {
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cpq-selected-records-count-excluded {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cpq-selected-records-count-excluded .codicon {
+    color: var(--vscode-errorForeground);
+    flex-shrink: 0;
+}
+
+.cpq-selected-records-count-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cpq-selected-records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow: auto;
+}
+
+/* Shared record row - used for both parent records and non-parent selected records */
+.cpq-record-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: var(--vscode-editor-font-family);
+    color: var(--vscode-foreground);
+    word-break: break-word;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.cpq-record-row:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+}
+
+/* Parent Record Container */
+.cpq-parent-record-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 4px;
+}
+
+/* Shared row layout: name container (left) + actions (right) – used for both parent and selected records */
+.cpq-record-row-name-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.cpq-record-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--vscode-foreground);
+    word-break: break-word;
+}
+
+.cpq-parent-record-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.cpq-parent-child-count {
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+/* Child count badge (shows after fetch; clickable to open View Children modal) */
+/* View children – button style so it’s obviously clickable (not a pill) */
+.cpq-view-children-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.cpq-view-children-btn:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-focusBorder);
+}
+
+.cpq-view-children-btn .codicon {
+    font-size: 12px;
+}
+
+/* Parent record actions container */
+.cpq-parent-record-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* Fetch children button */
+.cpq-fetch-children-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s ease;
+    min-width: 32px;
+    height: 24px;
+}
+
+.cpq-fetch-children-btn:hover:not(:disabled) {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.cpq-fetch-children-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cpq-fetch-children-btn .codicon {
+    font-size: 14px;
+}
+
+/* Children Container */
+.cpq-parent-children-container {
+    padding: 8px;
+    background-color: var(--vscode-editor-background);
+}
+
+/* Child Object Type Grouping */
+.cpq-child-object-type-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: 3px;
+}
+
+.cpq-child-object-type-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cpq-child-object-type-count {
+    padding: 1px 6px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.cpq-child-object-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+    margin-left: 8px;
+}
+
+/* Child record items - indented to show hierarchy */
+.cpq-selected-record-item.cpq-selected-record-child {
+    margin-left: 20px;
+    border-left: 2px solid var(--vscode-panel-border);
+    padding-left: 12px;
+}
+
+/* Children Modal Styles */
+#cpq-children-view-modal .modal-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 48px;
+}
+
+#cpq-children-view-modal .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+#cpq-children-view-modal .modal-close:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+#cpq-children-view-modal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.cpq-children-modal-object-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 8px;
+    background-color: var(--vscode-editorWidget-background);
+}
+
+.cpq-children-modal-object-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+}
+
+.cpq-children-modal-object-count {
+    margin-left: 8px;
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.cpq-children-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.cpq-children-modal-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    gap: 12px;
+    transition: background-color 0.15s ease;
+}
+
+.cpq-children-modal-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.cpq-children-modal-checkbox {
+    cursor: pointer;
+}
+
+.cpq-children-modal-item-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--vscode-foreground);
+}
+
+/* Object API Name Pill */
+.cpq-record-object-pill {
+    padding: 2px 6px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--vscode-editor-font-family);
+    white-space: nowrap;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.cpq-selected-record-parent {
+    font-weight: 500;
+    background-color: var(--vscode-editorWidget-background);
+    border-left: 3px solid var(--vscode-button-background);
+}
+
+.cpq-selected-record-child {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background-color: transparent;
+    border: none;
+    border-left: 2px solid var(--vscode-panel-border);
+    border-radius: 0;
+}
+
+.cpq-selected-record-child:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+}
+
+.cpq-child-record-name {
+    color: var(--vscode-foreground);
+}
+
+.cpq-child-object-pill {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--vscode-editor-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Inherited Line Columns Section */
+.inherited-line-columns-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid var(--vscode-panel-border);
+}
+
+.inherited-line-columns-header {
+    margin-bottom: 12px;
+}
+
+.inherited-line-columns-header h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.inherited-line-columns-header .info-text {
+    margin: 0;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.inherited-line-columns-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Child Sub-rows (generic hierarchical view) */
+.child-sub-row {
+    background-color: var(--vscode-editor-inactiveSelectionBackground) !important;
+}
+
+.child-sub-row:hover {
+    background-color: var(--vscode-list-hoverBackground) !important;
+}
+
+.child-sub-row.selected {
+    background-color: var(--vscode-list-activeSelectionBackground) !important;
+}
+
+/* Legacy class for backward compatibility */
+.line-column-sub-row {
+    background-color: var(--vscode-editor-inactiveSelectionBackground) !important;
+}
+
+.line-column-sub-row:hover {
+    background-color: var(--vscode-list-hoverBackground) !important;
+}
+
+.line-column-sub-row.selected {
+    background-color: var(--vscode-list-activeSelectionBackground) !important;
+}
+
+.expand-button {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.expand-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+    border-radius: 2px;
 }
 
 .cpq-mode-container .individual-phase-item {
@@ -774,6 +1503,25 @@ body {
     background-color: var(--vscode-button-hoverBackground);
 }
 
+.cpq-mode-container .phase-selection-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    line-height: 14px;
+}
+
+.cpq-mode-container .individual-phase-actions .icon-button {
+    position: relative;
+}
+
 .cpq-mode-container .phase-completed {
     opacity: 0.5;
     background-color: rgba(128, 128, 128, 0.05);
@@ -782,6 +1530,474 @@ body {
 .cpq-mode-container .phase-completed .individual-phase-title,
 .cpq-mode-container .phase-completed .individual-phase-objects,
 .cpq-mode-container .phase-completed .phase-object-pill {
+    opacity: 0.6;
+}
+
+/* RCA Mode Container */
+.rca-mode-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* RCA Alpha disclaimer banner - full width above phase tabs */
+.rca-alpha-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 10px 16px;
+    background-color: var(--vscode-inputValidation-warningBackground);
+    color: var(--vscode-inputValidation-warningForeground);
+    border-bottom: 1px solid var(--vscode-inputValidation-warningBorder);
+    flex-shrink: 0;
+}
+
+.rca-alpha-banner-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rca-alpha-banner-subtext {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.rca-mode-container .section {
+    margin-bottom: 8px;
+}
+
+.rca-metadata-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+}
+
+.rca-metadata-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.metadata-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.metadata-status-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+}
+
+.metadata-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.metadata-status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+}
+
+.metadata-status-not-deployed {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-errorForeground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+}
+
+.metadata-status-deployed {
+    background-color: var(--vscode-inputValidation-infoBackground);
+    color: var(--vscode-textLink-foreground);
+    border: 1px solid var(--vscode-inputValidation-infoBorder);
+}
+
+.rca-run-phases {
+    margin-top: 8px;
+    padding: 12px 0;
+    flex: 1;
+}
+
+/* RCA Phase Tabs */
+.rca-phase-tabs {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editorGroupHeader-tabsBackground);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.rca-phase-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.rca-phase-tab:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.rca-phase-tab.active {
+    border-bottom-color: var(--vscode-textLink-foreground);
+    color: var(--vscode-textLink-foreground);
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.rca-phase-tab.completed {
+    opacity: 0.7;
+}
+
+.rca-phase-tab.completed .rca-phase-tab-check {
+    color: var(--vscode-testing-iconPassed);
+}
+
+.rca-phase-tab-label {
+    display: inline-block;
+}
+
+.rca-phase-tab-check {
+    font-size: 14px;
+}
+
+.rca-phase-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* RCA Phase Content */
+.rca-phase-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.rca-phase-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.rca-phase-header-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.rca-phase-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.rca-phase-dml-operation {
+    display: flex;
+    align-items: center;
+}
+
+.rca-phase-dml-select {
+    padding: 4px 12px;
+    font-size: 13px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 2px;
+    min-width: 100px;
+}
+
+.rca-phase-dml-select:hover {
+    border-color: var(--vscode-inputOption-activeBorder);
+}
+
+.rca-phase-dml-select:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
+.rca-phase-header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    min-width: 32px;
+    height: 32px;
+}
+
+.rca-phase-header-btn.icon-button {
+    padding: 6px;
+}
+
+.rca-phase-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.rca-phase-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.rca-phase-objects-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rca-phase-selected-records-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.rca-phase-section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.rca-phase-selected-records-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.rca-phase-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    position: relative;
+}
+
+.rca-phase-action-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    margin-left: 6px;
+}
+
+.rca-phase-selected-records-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rca-selected-records-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rca-selected-records-object-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+    border-radius: 4px;
+}
+
+.rca-selected-records-object-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+}
+
+.rca-selected-records-count {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+}
+
+.rca-selected-records-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.rca-selected-records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rca-selected-record-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+}
+
+.rca-record-object-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.rca-mode-container .individual-phase-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    gap: 12px;
+}
+
+.rca-mode-container .individual-phase-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rca-mode-container .individual-phase-title {
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.phase-warning-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background-color: var(--vscode-inputValidation-warningBackground);
+    color: var(--vscode-inputValidation-warningForeground);
+    border: 1px solid var(--vscode-inputValidation-warningBorder);
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.rca-mode-container .individual-phase-objects {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.rca-mode-container .phase-object-pill {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    white-space: nowrap;
+}
+
+.rca-mode-container .individual-phase-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.rca-mode-container .phase-run-buttons-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.rca-mode-container .phase-done-button-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.rca-mode-container .phase-done-button {
+    width: 100%;
+    height: 32px;
+}
+
+.rca-mode-container .phase-done-button-completed {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-border);
+}
+
+.rca-mode-container .phase-done-button-completed:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.rca-mode-container .phase-completed {
+    opacity: 0.5;
+    background-color: rgba(128, 128, 128, 0.05);
+}
+
+.rca-mode-container .phase-completed .individual-phase-title,
+.rca-mode-container .phase-completed .individual-phase-objects,
+.rca-mode-container .phase-completed .phase-object-pill {
     opacity: 0.6;
 }
 
@@ -946,7 +2162,25 @@ body {
     display: flex;
 }
 
-.main-content.cpq-mode .standard-mode-only {
+.main-content.cpq-mode .standard-mode-only,
+.main-content.rca-mode .standard-mode-only {
+    display: none;
+}
+
+/* In CPQ/RCA mode the header and header-actions are unused; each phase has its own controls */
+.main-content.cpq-mode .migration-objects-header,
+.main-content.rca-mode .migration-objects-header,
+.main-content.cpq-mode .migration-objects-header-actions,
+.main-content.rca-mode .migration-objects-header-actions {
+    display: none;
+}
+
+.objects-mode-only {
+    display: block;
+}
+
+.main-content.cpq-mode .objects-mode-only,
+.main-content.rca-mode .objects-mode-only {
     display: none;
 }
 
@@ -1016,7 +2250,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 20px 4px 20px;
+    padding: 20px 20px 12px 20px;
     flex-shrink: 0;
 }
 
@@ -1026,13 +2260,20 @@ body {
     color: var(--vscode-textLink-foreground);
 }
 
-.objects-mode-only {
-    display: block;
+.migration-objects-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
-.main-content.cpq-mode .objects-mode-only {
-    display: none;
+.migration-objects-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 20px 12px 20px;
+    flex-shrink: 0;
 }
+
 
 .migration-objects-controls {
     display: flex;
@@ -1046,6 +2287,10 @@ body {
     flex-direction: column;
     gap: 8px;
     flex-shrink: 0;
+}
+
+.migration-objects-header-right .dml-operation-control {
+    margin: 0;
 }
 
 .config-button-wrapper {
@@ -1506,9 +2751,10 @@ textarea.text-input {
 
 /* Smaller confirmation modal for simple confirmations */
 #confirm-modal .modal-content {
-    max-width: 400px;
+    max-width: 700px;
     width: auto;
-    min-width: 300px;
+    min-width: 500px;
+    max-height: 85vh;
 }
 
 #confirm-modal .modal-header {
@@ -1518,6 +2764,8 @@ textarea.text-input {
 #confirm-modal .modal-body {
     padding: 16px;
     min-height: auto;
+    max-height: calc(85vh - 120px);
+    overflow-y: auto;
 }
 
 #confirm-modal .modal-footer {
@@ -2142,11 +3390,14 @@ button:disabled {
 }
 
 .migration-field-input-wrapper > .migration-input-group {
-    width: 85%;
+    width: 70%;
+    flex-shrink: 0;
 }
 
-.migration-field-input-wrapper > .migration-filter-btn {
+.migration-field-input-wrapper > .migration-filter-btn,
+.migration-field-input-wrapper > select.select-input {
     flex-shrink: 0;
+    margin-left: 0; /* Remove any margin to ensure consistent gap */
 }
 
 .migration-field-label {
@@ -2196,10 +3447,17 @@ button:disabled {
 
 .migration-input-group .migration-input {
     flex: 1;
+    min-width: 0; /* Allow flex item to shrink below its content size */
+}
+
+/* Ensure input fields have the same width regardless of number of buttons */
+.migration-field-input-wrapper > .migration-input-group > .migration-input {
+    flex: 1;
+    min-width: 0;
 }
 
 .migration-field .migration-filter-btn {
-    margin-left: 12px;
+    /* margin-left removed - button is now inside .migration-field-input-wrapper which handles spacing via gap */
     display: flex;
     align-items: center;
     gap: 4px;
@@ -2246,13 +3504,14 @@ button:disabled {
 /* When used as an action button, override icon-only styles */
 .migration-action-btn.migration-filter-btn {
     width: auto;
-    height: auto;
+    height: 32px;
     padding: 8px 16px;
     border: 1px solid var(--vscode-button-border);
     background-color: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     font-size: 12px;
     flex-shrink: 0;
+    box-sizing: border-box; /* Ensure padding is included in height */
 }
 
 .migration-action-btn.migration-filter-btn svg {
@@ -2294,6 +3553,577 @@ button:disabled {
     height: 16px;
     cursor: pointer;
     accent-color: var(--vscode-button-background);
+}
+
+/* CPQ Parent Selection Modal Styles */
+.master-selection-tabs {
+    display: flex;
+    gap: 5px;
+    padding: 10px 16px 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    overflow-x: auto;
+}
+
+.master-selection-tab {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.master-selection-tab:hover {
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.master-selection-tab.active {
+    color: var(--vscode-foreground);
+    border-bottom-color: var(--vscode-button-background);
+    font-weight: 500;
+}
+
+.master-selection-tab.no-selections {
+    opacity: 0.7;
+}
+
+.master-selection-tab-badge {
+    display: inline-block;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.master-selection-content {
+    padding: 16px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.master-selection-tab-content {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.master-selection-tab-content.active {
+    display: flex;
+}
+
+.master-selection-search {
+    margin-bottom: 15px;
+}
+
+.master-selection-search-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.master-selection-search-wrapper input {
+    flex: 1;
+    padding: 8px;
+    font-size: 13px;
+}
+
+.master-selection-filters-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.master-selection-filters-button:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.master-selection-filters-button.active {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-background);
+}
+
+.master-selection-filters-button .codicon {
+    font-size: 16px;
+}
+
+.master-selection-filters {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+}
+
+.master-selection-filter-help {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: var(--vscode-textBlockQuote-background);
+    border-left: 3px solid var(--vscode-textBlockQuote-border);
+    border-radius: 2px;
+}
+
+.master-selection-filter-help code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: 11px;
+    background-color: var(--vscode-textCodeBlock-background);
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+.master-selection-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.master-selection-filter-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.master-selection-filter-field-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+
+.master-selection-filter-field {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+.master-selection-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 24px;
+    max-height: 120px;
+    overflow-y: auto;
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.master-selection-filter-operator {
+    flex: 0 0 120px;
+    padding: 6px 8px;
+    font-size: 13px;
+    background-color: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+}
+
+.master-selection-filter-value {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+.master-selection-filter-remove {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--vscode-foreground);
+    transition: all 0.2s ease;
+}
+
+.master-selection-filter-remove:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-errorForeground);
+    color: var(--vscode-errorForeground);
+}
+
+.master-selection-add-filter {
+    margin-top: 12px;
+    width: 100%;
+}
+
+.master-selection-list {
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    background-color: var(--vscode-input-background);
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+}
+
+.master-selection-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.master-selection-table thead {
+    position: sticky;
+    top: 0;
+    background-color: var(--vscode-editor-background);
+    z-index: 10;
+}
+
+.master-selection-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    border-bottom: 2px solid var(--vscode-panel-border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.master-selection-table th:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.master-selection-table th.sortable {
+    position: relative;
+    padding-right: 24px;
+}
+
+.master-selection-table th.sortable::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+}
+
+.master-selection-table th.sort-asc::after {
+    content: '↑';
+    color: var(--vscode-button-background);
+}
+
+.master-selection-table th.sort-desc::after {
+    content: '↓';
+    color: var(--vscode-button-background);
+}
+
+.master-selection-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--vscode-foreground);
+}
+
+.master-selection-table tbody tr:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.master-selection-table tbody tr.selected {
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.master-selection-table input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.master-selection-list-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    transition: background-color 0.15s ease;
+}
+
+.master-selection-list-item:last-child {
+    border-bottom: none;
+}
+
+.master-selection-list-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.master-selection-list-item input[type="checkbox"] {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.master-selection-list-item label {
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+}
+
+.master-selection-summary {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-right: 16px;
+}
+
+/* Spinner animation for loading states */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.codicon-modifier-spin {
+    animation: spin 1s linear infinite;
+}
+
+#master-selection-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+#cpq-master-selection-modal .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+#cpq-master-selection-modal .modal-close:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+#cpq-master-selection-modal .modal-content {
+    max-width: 95vw;
+    width: 95vw;
+    max-height: 95vh;
+    height: 95vh;
+    min-height: 700px;
+    min-width: 1000px;
+}
+
+#cpq-master-selection-modal .modal-header {
+    flex-shrink: 0;
+}
+
+#cpq-master-selection-modal .master-selection-tabs {
+    flex-shrink: 0;
+}
+
+#cpq-master-selection-modal .modal-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#cpq-master-selection-modal .master-selection-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#cpq-master-selection-modal .master-selection-tab-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#cpq-master-selection-modal .master-selection-search {
+    flex-shrink: 0;
+}
+
+#cpq-master-selection-modal .master-selection-list {
+    flex: 1;
+    overflow: auto;
+    max-height: none;
+    min-height: 0;
+}
+
+#cpq-master-selection-modal .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+}
+
+#cpq-master-selection-modal .modal-footer > div:last-child {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+}
+
+#cpq-master-selection-modal .modal-footer > div:last-child button {
+    position: static;
+    z-index: auto;
+}
+
+#cpq-master-selection-modal #master-selection-cancel {
+    order: 1;
+}
+
+#cpq-master-selection-modal #master-selection-save {
+    order: 2;
+}
+
+#cpq-master-selection-modal #master-selection-save-close {
+    order: 3;
+}
+
+/* Rollback Button Styles */
+.icon-button-warning {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+}
+
+.icon-button-warning:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Rollback Modal Styles */
+#rollback-modal .modal-content {
+    max-width: 900px;
+}
+
+.rollback-section {
+    margin-bottom: 24px;
+}
+
+.rollback-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.backup-info {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.backup-info div {
+    margin-bottom: 4px;
+}
+
+.backup-info strong {
+    display: inline-block;
+    min-width: 120px;
+}
+
+.status-success {
+    color: var(--vscode-testing-iconPassed);
+}
+
+.status-warning {
+    color: var(--vscode-testing-iconQueued);
+}
+
+.status-error {
+    color: var(--vscode-testing-iconFailed);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-link:hover {
+    color: var(--vscode-textLink-activeForeground);
+}
+
+#rollback-operations-table {
+    margin-top: 12px;
+}
+
+#rollback-operations-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#rollback-operations-table th,
+#rollback-operations-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+#rollback-operations-table th {
+    font-weight: 600;
+    background-color: var(--vscode-editor-background);
+    position: sticky;
+    top: 0;
+}
+
+#rollback-operations-table tbody tr:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.modal-footer-note {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+}
+
+.modal-footer-note p {
+    margin: 4px 0;
 }
 
 

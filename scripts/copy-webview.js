@@ -20,20 +20,32 @@ files.forEach(file => {
   }
 });
 
-// Copy js directory
+// Copy js directory recursively (including subdirectories)
+function copyDirectory(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    if (entry.isDirectory()) {
+      copyDirectory(srcPath, destPath);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(srcPath, destPath);
+      const relativePath = path.relative(path.join(srcDir, 'js'), srcPath);
+      console.log(`Copied js/${relativePath} to out/webview/ui/js/${relativePath}`);
+    }
+  }
+}
+
 const jsSrcDir = path.join(srcDir, 'js');
 const jsOutDir = path.join(outDir, 'js');
 if (fs.existsSync(jsSrcDir)) {
-  fs.mkdirSync(jsOutDir, { recursive: true });
-  const jsFiles = fs.readdirSync(jsSrcDir);
-  jsFiles.forEach(file => {
-    const srcFile = path.join(jsSrcDir, file);
-    const outFile = path.join(jsOutDir, file);
-    if (fs.statSync(srcFile).isFile()) {
-      fs.copyFileSync(srcFile, outFile);
-      console.log(`Copied js/${file} to out/webview/ui/js/`);
-    }
-  });
+  copyDirectory(jsSrcDir, jsOutDir);
 }
 
 // Copy codicons from node_modules to out directory for self-contained packaging

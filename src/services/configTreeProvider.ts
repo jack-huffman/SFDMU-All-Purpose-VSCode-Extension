@@ -1,8 +1,14 @@
 import * as vscode from 'vscode';
-import { FileSystemItem, getConfigTree } from '../utils/fileUtils';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { FileSystemItem, getConfigTree, getConfigDir } from '../utils/fileUtils';
 
 export class ConfigTreeItem extends vscode.TreeItem {
-  constructor(public readonly item: FileSystemItem, public readonly isRootItem: boolean = false) {
+  constructor(
+    public readonly item: FileSystemItem, 
+    public readonly isRootItem: boolean = false,
+    public readonly mode?: 'standard' | 'cpq' | 'rca'
+  ) {
     super(
       item.name,
       item.type === 'folder'
@@ -15,9 +21,22 @@ export class ConfigTreeItem extends vscode.TreeItem {
     // Show full relative path on hover
     this.tooltip = item.path;
 
-    // For files, use file-code codicon with blue color for config files
+    // For files, use file-code codicon with color based on mode
     if (item.type === 'file') {
-      this.iconPath = new vscode.ThemeIcon('file-code', new vscode.ThemeColor('textLink.foreground'));
+      let iconColor: vscode.ThemeColor;
+      switch (mode) {
+        case 'cpq':
+          iconColor = new vscode.ThemeColor('charts.green');
+          break;
+        case 'rca':
+          iconColor = new vscode.ThemeColor('charts.orange');
+          break;
+        case 'standard':
+        default:
+          iconColor = new vscode.ThemeColor('textLink.foreground');
+          break;
+      }
+      this.iconPath = new vscode.ThemeIcon('file-code', iconColor);
     }
 
     this.contextValue = item.type === 'folder' ? 'sfdmuFolder' : 'sfdmuConfig';
@@ -50,15 +69,38 @@ export class ConfigTreeProvider implements vscode.TreeDataProvider<ConfigTreeIte
     // Root items
     if (!element) {
       const tree = await getConfigTree(this.workspaceFolder);
-      return tree.map((item) => this.toTreeItem(item, true)); // true = isRootItem
+      return Promise.all(tree.map((item) => this.toTreeItem(item, true))); // true = isRootItem
     }
 
     const children = element.item.children || [];
-    return children.map((child) => this.toTreeItem(child, false)); // false = not root item
+    return Promise.all(children.map((child) => this.toTreeItem(child, false))); // false = not root item
   }
 
-  private toTreeItem(item: FileSystemItem, isRootItem: boolean): ConfigTreeItem {
-    const treeItem = new ConfigTreeItem(item, isRootItem);
+  private async toTreeItem(item: FileSystemItem, isRootItem: boolean): Promise<ConfigTreeItem> {
+    let mode: 'standard' | 'cpq' | 'rca' | undefined = undefined;
+    
+    // Read the config file to determine its mode
+    if (item.type === 'file' && this.workspaceFolder) {
+      try {
+        const configDir = await getConfigDir(this.workspaceFolder);
+        const configPath = path.join(configDir, `${item.path}.json`);
+        
+        try {
+          await fs.access(configPath);
+          const configContent = await fs.readFile(configPath, 'utf8');
+          const config = JSON.parse(configContent);
+          mode = config.mode || 'standard';
+        } catch {
+          // If we can't read the file, default to standard mode
+          mode = 'standard';
+        }
+      } catch (error) {
+        // If we can't get config dir, default to standard mode
+        mode = 'standard';
+      }
+    }
+    
+    const treeItem = new ConfigTreeItem(item, isRootItem, mode);
 
     // Double-click / Enter on a config opens it in the migration panel
     if (item.type === 'file') {

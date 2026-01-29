@@ -12,7 +12,12 @@
     const Modals = window.SFDMU.Modals;
     const MessageHandler = window.SFDMU.MessageHandler;
     const CpqMode = window.SFDMU.CpqMode;
+    const RcaMode = window.SFDMU.RcaMode;
     
+    function isCpqMode() {
+        return (State.currentConfig.mode || 'standard') === 'cpq';
+    }
+
     window.SFDMU.Main = {
         init: function() {
             // Set up message handler FIRST so it can receive messages
@@ -29,9 +34,16 @@
             Modals.setupObjectSelection();
             Modals.setupFieldSelection();
             Modals.setupExternalIdSelection();
+            // Initialize mode handlers - RcaMode must be initialized first since it handles all mode switching
+            if (RcaMode && RcaMode.init) {
+                RcaMode.init();
+            }
             if (CpqMode && CpqMode.init) {
                 CpqMode.init();
             }
+            
+            // Note: applyModeFromConfig is called by ConfigManager when loading configs
+            // Don't call it here to avoid overriding the mode selector initialization
             
             this.requestOrgList();
             this.requestSavedConfigs();
@@ -58,8 +70,21 @@
             // Org selection
             const sourceOrgSelect = document.getElementById('source-org-select');
             if (sourceOrgSelect) {
-                sourceOrgSelect.addEventListener('change', (e) => {
+                sourceOrgSelect.addEventListener('change', async (e) => {
                     const alias = e.target.value;
+                    
+                    // Skip warning if orgs are being synced (initial load)
+                    // This prevents false warnings when orgs are initially populated
+                    if (State.isSyncingOrgs) {
+                        // Just update org details without showing warning
+                        if (alias) {
+                            vscode.postMessage({ command: 'getOrgDetails', alias, type: 'source' });
+                            // Prefetch objects for the selected org
+                            this.prefetchObjects(alias);
+                        }
+                        return;
+                    }
+                    
                     if (alias) {
                         vscode.postMessage({ command: 'getOrgDetails', alias, type: 'source' });
                         // Prefetch objects for the selected org
@@ -117,17 +142,6 @@
                 });
             }
             
-            // Modified since
-            const modifiedSinceInput = document.getElementById('modified-since');
-            if (modifiedSinceInput) {
-                modifiedSinceInput.addEventListener('change', (e) => {
-                    State.currentConfig.modifiedSince = e.target.value;
-                    if (!State.isCheckingConfigChanges && window.SFDMU.ConfigChangeChecker) {
-                        window.SFDMU.ConfigChangeChecker.check();
-                    }
-                });
-            }
-            
             // Excluded objects
             const excludedObjectsTextarea = document.getElementById('excluded-objects');
             if (excludedObjectsTextarea) {
@@ -144,6 +158,13 @@
                 });
             }
             
+            const exportExcelIcon = document.getElementById('export-excel-icon');
+            if (exportExcelIcon) {
+                exportExcelIcon.addEventListener('click', () => {
+                    MigrationExecution.exportToExcel();
+                });
+            }
+            
             const simulateIcon = document.getElementById('simulate-migration-icon');
             if (simulateIcon) {
                 simulateIcon.addEventListener('click', () => {
@@ -155,6 +176,13 @@
             if (runIcon) {
                 runIcon.addEventListener('click', () => {
                     MigrationExecution.runMigration();
+                });
+            }
+            
+            const createBackupIcon = document.getElementById('create-backup-icon');
+            if (createBackupIcon) {
+                createBackupIcon.addEventListener('click', () => {
+                    MigrationExecution.createBackup();
                 });
             }
             
@@ -218,26 +246,17 @@
             // Save original state when modal opens
             function saveConfigModalState() {
                 const excludedObjectsTextarea = document.getElementById('excluded-objects');
-                const lastModifiedDateInput = document.getElementById('cpq-advanced-last-modified-date');
-                
                 configModalOriginalState = {
-                    excludedObjects: excludedObjectsTextarea ? excludedObjectsTextarea.value : '',
-                    modifiedSince: lastModifiedDateInput ? lastModifiedDateInput.value : ''
+                    excludedObjects: excludedObjectsTextarea ? excludedObjectsTextarea.value : ''
                 };
             }
             
             // Restore original state
             function restoreConfigModalState() {
                 if (!configModalOriginalState) return;
-                
                 const excludedObjectsTextarea = document.getElementById('excluded-objects');
-                const lastModifiedDateInput = document.getElementById('cpq-advanced-last-modified-date');
-                
                 if (excludedObjectsTextarea) {
                     excludedObjectsTextarea.value = configModalOriginalState.excludedObjects;
-                }
-                if (lastModifiedDateInput) {
-                    lastModifiedDateInput.value = configModalOriginalState.modifiedSince;
                 }
             }
             
@@ -252,38 +271,50 @@
                     if (configModal) {
                         configModal.style.display = 'flex';
                         // Update tab visibility and disclaimer based on mode
-                        const lastModifiedTab = document.getElementById('config-tab-last-modified-date');
                         const excludedTab = document.getElementById('config-tab-excluded-objects');
                         const excludedTabContent = document.getElementById('config-tab-content-excluded-objects');
                         const cpqDisclaimer = document.getElementById('excluded-objects-cpq-disclaimer');
+                        const mode = (State.currentConfig.mode || 'standard');
+                        const isCpqMode = mode === 'cpq';
+                        const isRcaMode = mode === 'rca';
+                        const isPhaseMode = isCpqMode || isRcaMode;
+                        const metadataTab = document.getElementById('config-tab-metadata-prerequisites');
+                        const rcaDisclaimer = document.getElementById('excluded-objects-rca-disclaimer');
                         
-                        const isCpqMode = (State.currentConfig.mode || 'standard') === 'cpq';
-                        
-                        if (isCpqMode) {
-                            // Show CPQ-specific tab
-                            if (lastModifiedTab) {
-                                lastModifiedTab.style.display = 'block';
+                        if (isPhaseMode) {
+                            if (isRcaMode && metadataTab) {
+                                metadataTab.style.display = 'block';
+                            } else if (metadataTab) {
+                                metadataTab.style.display = 'none';
                             }
-                            // Show CPQ disclaimer
-                            if (cpqDisclaimer) {
+                            if (isCpqMode && cpqDisclaimer) {
                                 cpqDisclaimer.style.display = 'block';
+                            } else if (cpqDisclaimer) {
+                                cpqDisclaimer.style.display = 'none';
+                            }
+                            if (isRcaMode && rcaDisclaimer) {
+                                rcaDisclaimer.style.display = 'block';
+                            } else if (rcaDisclaimer) {
+                                rcaDisclaimer.style.display = 'none';
                             }
                         } else {
-                            // Hide CPQ-specific tab
-                            if (lastModifiedTab) {
-                                lastModifiedTab.style.display = 'none';
-                                lastModifiedTab.classList.remove('active');
+                            if (metadataTab) {
+                                metadataTab.style.display = 'none';
+                                metadataTab.classList.remove('active');
                             }
-                            // Hide CPQ disclaimer
                             if (cpqDisclaimer) {
                                 cpqDisclaimer.style.display = 'none';
                             }
-                            // Ensure Excluded Objects is active if Last Modified Date tab was active
-                            const lastModifiedContent = document.getElementById('config-tab-content-last-modified-date');
-                            if (lastModifiedTab && lastModifiedTab.classList.contains('active')) {
-                                lastModifiedTab.classList.remove('active');
-                                if (lastModifiedContent) {
-                                    lastModifiedContent.classList.remove('active');
+                            if (rcaDisclaimer) {
+                                rcaDisclaimer.style.display = 'none';
+                            }
+                            const metadataContent = document.getElementById('config-tab-content-metadata-prerequisites');
+                            if (metadataTab && metadataTab.classList.contains('active')) {
+                                if (metadataTab) {
+                                    metadataTab.classList.remove('active');
+                                }
+                                if (metadataContent) {
+                                    metadataContent.classList.remove('active');
                                 }
                                 if (excludedTab) {
                                     excludedTab.classList.add('active');
@@ -299,18 +330,15 @@
             
             // Configuration modal tab switching
             const configExcludedTab = document.getElementById('config-tab-excluded-objects');
-            const configLastModifiedTab = document.getElementById('config-tab-last-modified-date');
+            const configMetadataTab = document.getElementById('config-tab-metadata-prerequisites');
             const configExcludedContent = document.getElementById('config-tab-content-excluded-objects');
-            const configLastModifiedContent = document.getElementById('config-tab-content-last-modified-date');
+            const configMetadataContent = document.getElementById('config-tab-content-metadata-prerequisites');
             
             function switchConfigTab(activeTab, activeContent) {
-                // Remove active from all tabs
                 if (configExcludedTab) configExcludedTab.classList.remove('active');
-                if (configLastModifiedTab) configLastModifiedTab.classList.remove('active');
+                if (configMetadataTab) configMetadataTab.classList.remove('active');
                 if (configExcludedContent) configExcludedContent.classList.remove('active');
-                if (configLastModifiedContent) configLastModifiedContent.classList.remove('active');
-                
-                // Add active to selected tab
+                if (configMetadataContent) configMetadataContent.classList.remove('active');
                 if (activeTab) activeTab.classList.add('active');
                 if (activeContent) activeContent.classList.add('active');
             }
@@ -321,9 +349,9 @@
                 });
             }
             
-            if (configLastModifiedTab) {
-                configLastModifiedTab.addEventListener('click', () => {
-                    switchConfigTab(configLastModifiedTab, configLastModifiedContent);
+            if (configMetadataTab) {
+                configMetadataTab.addEventListener('click', () => {
+                    switchConfigTab(configMetadataTab, configMetadataContent);
                 });
             }
             
@@ -346,12 +374,6 @@
                         window.SFDMU.ConfigManager.updateExcludedObjects();
                     }
                     
-                    // Update last modified date
-                    const lastModifiedDateInput = document.getElementById('cpq-advanced-last-modified-date');
-                    if (lastModifiedDateInput) {
-                        State.currentConfig.modifiedSince = lastModifiedDateInput.value || '';
-                    }
-                    
                     // Save the configuration
                     if (window.SFDMU.ConfigManager && window.SFDMU.ConfigManager.updateOrgConfig) {
                         window.SFDMU.ConfigManager.updateOrgConfig();
@@ -359,17 +381,6 @@
                     vscode.postMessage({ command: 'saveConfig', config: State.currentConfig });
                     
                     configModal.style.display = 'none';
-                });
-            }
-            
-            // Clear last modified date button
-            const clearLastModifiedDate = document.getElementById('clear-last-modified-date');
-            if (clearLastModifiedDate) {
-                clearLastModifiedDate.addEventListener('click', () => {
-                    const lastModifiedDateInput = document.getElementById('cpq-advanced-last-modified-date');
-                    if (lastModifiedDateInput) {
-                        lastModifiedDateInput.value = '';
-                    }
                 });
             }
             
@@ -384,11 +395,24 @@
             }
 
             // Getting started: Create Configuration CTA
-            const gettingStartedCreateBtn = document.getElementById('getting-started-create-config');
-            if (gettingStartedCreateBtn && window.SFDMU.ConfigManager) {
-                gettingStartedCreateBtn.addEventListener('click', () => {
-                    // Start a new configuration at the root (no folder path)
-                    window.SFDMU.ConfigManager.createNewInFolder('');
+            // Set up create config buttons for each mode
+            const createStandardBtn = document.getElementById('create-standard-config');
+            const createCpqBtn = document.getElementById('create-cpq-config');
+            const createRcaBtn = document.getElementById('create-rca-config');
+            
+            if (createStandardBtn && window.SFDMU.ConfigManager) {
+                createStandardBtn.addEventListener('click', () => {
+                    window.SFDMU.ConfigManager.createNewInFolder('', 'standard');
+                });
+            }
+            if (createCpqBtn && window.SFDMU.ConfigManager) {
+                createCpqBtn.addEventListener('click', () => {
+                    window.SFDMU.ConfigManager.createNewInFolder('', 'cpq');
+                });
+            }
+            if (createRcaBtn && window.SFDMU.ConfigManager) {
+                createRcaBtn.addEventListener('click', () => {
+                    window.SFDMU.ConfigManager.createNewInFolder('', 'rca');
                 });
             }
             

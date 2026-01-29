@@ -1,284 +1,113 @@
-# SFDMU All-Purpose Migration VSCode Extension
+# SFDMU All-Purpose Migration
 
-A Visual Studio Code extension that provides a visual interface for configuring and executing SFDMU (Salesforce Data Move Utility) data migrations for any Salesforce objects between orgs.
+A VS Code extension that provides a visual interface for configuring and executing SFDMU (Salesforce Data Move Utility) data migrations between Salesforce orgs—any objects in Standard mode, or pre-configured CPQ (11 phases) and RCA (7 phases) migrations.
 
 ## How to Use
 
-**Open the Migration Panel:**
-1. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-2. Type **`SFDMU: Open Migration Panel`**
-3. Press Enter
+1. **Open panel**: `Cmd+Shift+P` / `Ctrl+Shift+P` → **SFDMU: Open Migration Panel**
+2. **Orgs**: Select source and target (dropdown or manual username/instance URL/access token).
+3. **Mode**: Standard (custom objects/phases), CPQ (11 phases), or RCA (7 phases + metadata deployment).
+4. **Configure**: Standard—add objects, external IDs (Auto-detect or manual), phases. CPQ/RCA—select phases, filters; optionally use **Select Records** per phase to choose which master records to migrate.
+5. **RCA only**: Deploy metadata prerequisites (DecisionMatrixDefinition, ExpressionSet) before Phase 7 via **Deploy All Metadata Prerequisites**.
+6. **Generate**: Click **Generate Migration Files**; re-generate when the UI shows config-change badges.
+7. **Run**: **Run Simulation** first, then **Run Migration**. Run phases sequentially in CPQ/RCA; mark phases complete as you go.
 
-**Quick Start:**
-1. Select your source and target orgs
-2. Choose migration mode (Standard or CPQ)
-3. Add objects to migrate (Standard Mode) or select phases (CPQ Mode)
-4. Configure external IDs (use "Auto-detect" or enter manually)
-5. Click "Generate Migration Files"
-6. Run simulation mode first, then execute migrations
+**Other actions**: A pre-migration backup is created automatically before Run Migration (optional **Proceed Without Backup** if backup fails). When backups exist, a **Rollback** button appears (header in Standard; per phase in CPQ/RCA)—open it to pick a backup, review the rollback plan, then Run Simulation and Execute Rollback. **Export to Excel** (header in Standard; per phase in CPQ/RCA) runs SOQL against the source org and writes an Excel file. Use **SFDMU: Confirm Migration Complete** to run the completion flow (e.g. post-migration backup).
 
 ## Prerequisites
 
 - **Visual Studio Code** 1.80.0 or higher
-- **Salesforce CLI (sf)** installed and configured
-  - Install: https://developer.salesforce.com/tools/salesforcecli
+- **Salesforce CLI (sf)** installed and configured  
+  - Install: https://developer.salesforce.com/tools/salesforcecli  
   - Verify: `sf --version`
-- **SFDMU Plugin** for Salesforce CLI
-  - Install: `sf plugins install sfdmu`
+- **SFDMU Plugin** for Salesforce CLI  
+  - Install: `sf plugins install sfdmu`  
   - Verify: `sf plugins list` (should show `@forcedotcom/sfdmu`)
-- **Authorized Salesforce Orgs** in your Salesforce CLI
-  - Authorize: `sf org login web --alias <alias>`
+- **Authorized Salesforce Orgs**  
+  - Authorize: `sf org login web --alias <alias>`  
   - List: `sf org list`
 
 ## Features
 
-- **Visual Configuration Interface**: Configure migrations through an intuitive webview panel (no manual JSON editing)
-- **Two Migration Modes**:
-  - **Standard Mode**: Configure any Salesforce objects with custom phase organization
-  - **CPQ Mode**: Pre-configured phases optimized for Salesforce CPQ migrations
-- **Smart Automation**: Auto-detect external IDs, validate objects, generate SOQL queries
-- **Configuration Management**: Organize configurations in folders with tree view, drag-and-drop support
-- **Full SFDMU Integration**: Execute migrations directly from VS Code with terminal integration
+- **Visual configuration**: Webview panel for migrations (no manual JSON editing).
+- **Three modes**: Standard (any objects, custom phases); CPQ (11 phases); RCA (7 phases + Tooling API metadata deployment).
+- **Backup & rollback**: Automatic pre-migration backup; manual backup per phase/config; rollback from backup (simulation then execute); option to skip backup.
+- **Excel export**: Export migration data to Excel from Standard (header) or per phase in CPQ/RCA (SOQL against source org).
+- **Migration history**: Runs saved to `.vscode/sfdmu/history/` with status, records processed, errors, backup path.
+- **Master record selection (CPQ/RCA)**: Per-phase **Select Records** to choose which parent records to migrate; tabs per object, search, filters.
+- **Config change detection**: Badges when current UI config differs from last generated config (prompt to re-generate).
+- **Configuration tree**: Explorer view—nested folders, drag-and-drop to move configs, context menu (New Folder, New Standard/CPQ/RCA Configuration, Rename, Delete). Rename supports conflict resolution (Keep Both / Replace).
+- **Smart automation**: Auto-detect external IDs, validate objects, generate SOQL; relationship and composite external IDs supported.
+- **Full SFDMU integration**: Run simulation and migration from VS Code with terminal integration.
 
-## Usage Guide
+## Modes
 
-### Standard Migration Mode
+- **Standard**: Add objects, set external IDs (single, composite, or relationship), phase order, optional custom SOQL/WHERE. DML operation, query filters, excluded objects, output directory.
+- **CPQ (11 phases)**: Pricebook & Product → Product Rules → Configuration & Price Rules → Template Contents & Quote Templates → Line Columns & Template Sections → Additional Product Config → Discounts & Block Pricing → Quote Process → Custom Actions & Filters → Import/Export → Localization. Optional Product2; per-phase DML and master record selection.
+- **RCA (7 phases)**: Foundation → Product Core → Pricing/Selling Models → Catalog → Product Components → Pricing Rules/Adjustments → Configuration & Fulfillment. Handles composite keys, polymorphic lookups, field overrides, insert-only objects. Product2 excluded by default (match via `StockKeepingUnit` as External ID). **Phase 7 requires** DecisionMatrixDefinition and ExpressionSet metadata deployed to target (Tooling API); use **Deploy All Metadata Prerequisites** in the panel or deploy manually.
 
-1. **Configure Migration Settings**:
-   - Select "Standard" mode
-   - Select source and target orgs (from dropdown or enter manually)
-   - Add objects to migrate:
-     - Click "Add Object" or "Load Objects from Org"
-     - For each object, configure:
-       - **Object Name**: API name (e.g., `Account`, `CustomObject__c`)
-       - **External ID**: Field(s) used to match records
-         - Single: `Name`, `Id`
-         - Composite: `Field1;Field2` (semicolon-separated)
-         - Relationship: `Account.Name`, `CustomField__r.Name`
-       - **Auto-detect**: Click to automatically detect external ID fields
-       - **Phase Number**: Number indicating migration order
-       - **Custom SOQL**: Toggle to use a custom SOQL query (optional)
-       - **WHERE Clause**: Add custom filters (optional)
-   - Configure DML operation (Upsert recommended)
-   - Set query filters (Last Modified Date, custom WHERE clauses)
-   - Configure excluded objects
-   - Set output directory (default: `sfdmu-migration`)
+## Configuration Management
 
-2. **Generate Migration Files**:
-   - Click "Generate Migration Files"
-   - Review the generated `export.json` file
+- **Tree view** (Explorer → SFDMU Migration): Nested folders; drag-and-drop to move configs; right-click → New Folder, New Standard/CPQ/RCA Configuration, Rename, Delete; double-click to open.
+- **Save**: Configuration name in panel, optional folder path, click **Save**. Stored under workspace `.vscode/sfdmu/configs/`.
+- **Load**: Double-click in tree or use **Load Configuration** in panel.
+- **Export/Import**: **Export** copies config JSON to clipboard; paste into import field and **Import**.
+- **Change detection**: When the UI differs from the last generated config, badges prompt you to **Generate Migration Files** again.
 
-3. **Run Migrations**:
-   - Click "Run Simulation" first (recommended)
-   - After successful simulation, click "Run Migration"
-   - Monitor progress in the terminal
+## Backup & Rollback
 
-### CPQ Migration Mode
+- **When**: A pre-migration backup runs automatically before **Run Migration** (Standard and per phase in CPQ/RCA). If backup fails, you can choose **Proceed Without Backup** or cancel.
+- **Manual backup**: **Create Backup** in the panel (Standard) or per phase (CPQ/RCA).
+- **Where**: Backups are stored under the migration output directory in `backups/<timestamp>/` (metadata + CSV per object).
+- **Rollback**: When backups exist, a **Rollback** button appears. Open it → select a backup → review rollback plan (objects and operations) → **Run Rollback Simulation**, then **Execute Rollback**. Rollback reverses the migration using the backup data (e.g. restore pre-migration state or delete inserted records).
 
-1. **Configure CPQ Migration Settings**:
-   - Select "CPQ" mode
-   - Select source and target orgs
-   - Select phases to include (11 phases available)
-   - Optionally include Product2 records
-   - Configure DML operation, query filters, and output directory
+## Excel Export & Migration History
 
-2. **Generate CPQ Phase Files**:
-   - Click "Generate Migration Files"
-   - Review generated `export.json` files in `Phase N/` folders
+- **Excel Export**: **Export to Excel** runs SOQL against the source org for the current config (Standard) or selected phase (CPQ/RCA) and writes an Excel file. Large datasets may take several minutes.
+- **Migration History**: Each run is recorded in `.vscode/sfdmu/history/<id>.json` with config name, mode, orgs, timestamp, operation, phase (if applicable), per-object counts, status (completed/failed/partial), backup location, and errors.
 
-3. **Run CPQ Phases**:
-   - Expand "Run Individual Phases" section
-   - Run simulation for Phase 1 first
-   - After successful simulation, run each phase individually
-   - Mark phases as complete as you progress
+## Advanced
 
-**CPQ Phase Descriptions:**
-- **Phase 1**: Pricebook & Product Configuration (foundation objects)
-- **Phase 2**: Product Rules (with child objects)
-- **Phase 3**: Configuration Rules & Price Rules
-- **Phase 4**: Template Contents & Quote Templates
-- **Phase 5**: Line Columns & Template Sections
-- **Phase 6**: Additional Product Configuration
-- **Phase 7**: Discounts & Block Pricing
-- **Phase 8**: Quote Process Configuration
-- **Phase 9**: Custom Actions & Filters
-- **Phase 10**: Import/Export Configuration
-- **Phase 11**: Localization (final phase)
+- **External IDs**: Single (`Name`, `ProductCode`), composite (`Field1;Field2`), or relationship (`Account.Name`, `CustomField__r.Name`). Use **Auto-detect** where applicable. Mark external ID fields in the target org (Object Manager → field → External ID).
+- **Custom SOQL**: Toggle **Use Custom SOQL** per object; include Id, external ID fields, and relationship fields. **Select Fields** limits migrated fields (external ID and relationship fields auto-included).
+- **Filters**: Last Modified Date (global); object-specific WHERE in Query Filters; custom WHERE on objects.
+- **Phases**: Order objects by dependency (parents in earlier phases). Phase completion checkboxes mark phases complete and disable re-run; status saved with config.
+- **Master selection (CPQ/RCA)**: **Select Records** on a phase opens a modal to choose which parent records to migrate; child objects are scoped to those selections. Use search and filters in the modal.
 
-### Configuration Management
+## External IDs & Best Practices
 
-The extension provides a configuration management system through the Explorer sidebar.
-
-**Tree View Features:**
-- Organize configurations in nested folders
-- Drag and drop to move configurations
-- Right-click for context menu actions (create, rename, delete, open)
-- Double-click to open configurations
-
-**Saving Configurations:**
-- Enter a configuration name in the migration panel
-- Optionally select a folder path (e.g., `ClientName/ProjectName`)
-- Click "Save"
-
-**Loading Configurations:**
-- Double-click a configuration in the tree view, or
-- Use "Load Configuration" dropdown in the migration panel
-
-**Export/Import:**
-- Click "Export" to copy configuration JSON to clipboard
-- Paste JSON into import field and click "Import"
-
-## Advanced Features
-
-### Auto-detect External IDs
-Click "Auto-detect" next to External ID field to automatically detect external ID fields from your Salesforce org. Works best for single-field external IDs.
-
-### Custom SOQL Queries
-Toggle "Use Custom SOQL" for an object to write custom queries. Ensure your query includes all fields needed for external ID matching, relationship fields, and the `Id` field.
-
-**Example:**
-```sql
-SELECT Id, Name, Account.Name, CustomField__c 
-FROM Opportunity 
-WHERE StageName = 'Closed Won'
-```
-
-### Field Selection
-Click "Select Fields" to choose specific fields to migrate instead of all fields. External ID fields and relationship fields are automatically included.
-
-### Relationship Fields in External IDs
-The extension supports relationship traversal:
-- Standard: `Account.Name` (requires `AccountId` in query)
-- Custom: `SBQQ__Product__r.ProductCode` (requires `SBQQ__Product__c` in query)
-- Composite: `Account.Name;ProductCode`
-
-The extension automatically includes necessary relationship fields in SOQL queries.
-
-### Incremental Migrations
-Set "Last Modified Date" filter to migrate only records modified on or after that date. Useful for syncing changes between orgs.
-
-### Custom Filters
-Add object-specific WHERE clauses in the Query Filters section. Multiple filters can be added for the same or different objects.
-
-**Examples:**
-- `LastModifiedBy.Name = 'John Doe'`
-- `SBQQ__Active__c = true`
-- `StageName IN ('Closed Won', 'Closed Lost')`
-
-### Phase Completion Tracking
-Check the checkbox next to a phase to mark it as complete. Completed phases show with a checkmark and are disabled. Completion status is saved with configurations.
-
-## Migration Phases
-
-Phases organize objects into execution groups. Objects in Phase 1 are migrated first, then Phase 2, and so on. This ensures dependencies are respected.
-
-**Phase Dependencies:**
-- **Master-Detail Relationships**: Child objects must be in the same or later phase than their parent
-- **Lookup Relationships**: Objects with lookups should be in later phases
-- **Composite External IDs**: Objects using relationship fields in external IDs must be in later phases
-
-**Example Phase Organization:**
-- **Phase 1**: `Account`, `Product2`, `Pricebook2`
-- **Phase 2**: `Contact`, `Opportunity`, `PricebookEntry`
-- **Phase 3**: `OpportunityLineItem`, `Quote`, `QuoteLineItem`
-
-## External IDs and Relationships
-
-External IDs are fields used to match records between source and target orgs. They must be unique identifiers, present in both orgs, and marked as External ID in the target org.
-
-**Types of External IDs:**
-1. **Single Field**: `Name`, `Id`, `ProductCode`
-2. **Composite**: `Field1;Field2` (semicolon-separated)
-3. **Relationship**: `Account.Name`, `SBQQ__Product__r.ProductCode`
-4. **Composite with Relationships**: `Account.Name;ProductCode`
-
-**Setting External IDs in Target Org:**
-Before migrating, ensure external ID fields are marked as External ID in the target org:
-1. Go to Object Manager → Select object → Fields & Relationships
-2. Find the field(s) used as external ID
-3. Edit the field → Check "External ID" checkbox → Save
-
-**Note**: Standard fields like `Name` and `ProductCode` may already be external IDs. Custom fields must be explicitly marked.
-
-## Best Practices
-
-1. **Always Start with Simulation**: Run each phase in simulation mode first
-2. **Migrate Phases in Order**: Run phases sequentially (1, 2, 3, etc.)
-3. **Use Auto-detect for External IDs**: Verify detected external IDs match your requirements
-4. **Organize Objects by Dependencies**: Place parent objects in earlier phases
-5. **Use Incremental Migrations**: Set "Last Modified Date" filter for updates
-6. **Exclude Unwanted Objects**: Add objects to the excluded objects list
-7. **Mark Phases as Complete**: Track progress and prevent accidental re-runs
-8. **Save Configurations**: Use descriptive names and organize in folders
-9. **Test in Sandbox First**: Always test migrations in a sandbox before production
-10. **Monitor Terminal Output**: Watch for SFDMU warnings and errors
+- External IDs must be unique, present in both orgs, and marked as External ID in the target. Composite: semicolon-separated. Relationship: `Parent__r.ExternalField`.
+- **Best practices**: Run simulation first; migrate phases in order; use Auto-detect then verify; put parents in earlier phases; use Last Modified Date for incremental runs; exclude unneeded objects; mark phases complete; save configs in folders; test in sandbox; watch terminal for SFDMU output.
 
 ## Troubleshooting
 
-### Common Issues
+- **Missing parent records**: Migrate parent objects in earlier phases; ensure Product2 (or other parents) exist in target if excluded from migration; set ProductCode (CPQ) or StockKeepingUnit (RCA) as External ID in target.
+- **Org dropdowns empty**: `sf org list`; authorize with `sf org login web --alias <alias>`; confirm `sf --version`.
+- **Phase files not generated**: Check VS Code notifications; valid output path; at least one object (Standard) or one phase selected (CPQ/RCA).
+- **Product2 matching fails**: Verify ProductCode (CPQ) or StockKeepingUnit (RCA) is External ID in target; values align between orgs; or include Product2 in migration.
+- **RCA metadata deployment fails**: Ensure source has DecisionMatrixDefinition and ExpressionSet; target can deploy Custom Metadata; try manual: `sf project deploy start --metadata DecisionMatrixDefinition,ExpressionSet --target-org <alias>`.
+- **Backup/rollback failures**: Check output directory is writable; sufficient disk space; org credentials valid for target (backup queries target).
+- **Excel export slow or times out**: Large datasets; reduce scope (e.g. phase or filters) or run from terminal with increased timeout.
+- **Config not saving**: Non-empty config name; workspace open (configs are workspace-scoped); `.vscode/sfdmu/configs` exists and is writable.
+- **Terminal no output**: Wait a few seconds; confirm `sf plugins list` shows SFDMU; verify org credentials.
 
-**"Missing parent records" Error**
-- Verify parent objects were migrated in earlier phases
-- Check that Product2 records exist in target org (if Product2 is excluded)
-- Ensure ProductCode is marked as External ID in target org
-- Review the missing records list - some may be expected
-
-**Org Dropdowns Are Empty**
-- Verify orgs are authorized: `sf org list`
-- Re-authorize orgs: `sf org login web --alias <alias>`
-- Check Salesforce CLI is installed: `sf --version`
-
-**Phase Files Not Generated**
-- Check for error notifications in VS Code
-- Verify output directory path is valid
-- Ensure at least one object is configured (Standard Mode) or at least one phase is selected (CPQ Mode)
-
-**Product2 Matching Fails**
-- Verify ProductCode is marked as External ID in target org
-- Check that ProductCode values match between source and target
-- Consider including Product2 in migration if matching is problematic
-
-**Terminal Doesn't Show Output**
-- Wait a few seconds - SFDMU may take time to start
-- Check that SFDMU plugin is installed: `sf plugins list`
-- Verify org credentials are correct
-
-**Configuration Not Saving**
-- Ensure configuration name is not empty
-- Check VS Code workspace is open (configurations are workspace-specific)
-- Verify `.vscode/sfdmu/configs` directory exists and is writable
-
-### Getting Help
-
-1. Check SFDMU Documentation: https://help.sfdmu.com/
-2. Review Terminal Output: Most errors include detailed messages
-3. Check VS Code Output Panel: Select "SFDMU All-Purpose Migration" from dropdown
-4. Enable Debug Logging: Set `SF_LOG_LEVEL=DEBUG` in terminal
-5. Test Manually: Try running SFDMU from command line to isolate issues
+**Getting help**: [SFDMU Documentation](https://help.sfdmu.com/); VS Code Output panel → "SFDMU All-Purpose Migration"; `SF_LOG_LEVEL=DEBUG` in terminal; run SFDMU from CLI to isolate issues.
 
 ## Development
 
-### Project Structure
-```
-src/
-├── extension.ts              # Extension entry point
-├── webview/
-│   ├── migrationPanel.ts     # Webview panel management
-│   └── ui/                   # Webview UI files
-├── services/                 # Core services
-├── models/                   # TypeScript interfaces
-└── utils/                    # Utility functions
-```
+### Project structure
 
-### Building
+- **Backend**: `src/extension.ts` (entry, commands, tree view); `src/webview/migrationPanel.ts` (webview host, message handlers); `src/services/` — configTreeProvider, backupService, rollbackGenerator, rollbackRunner, excelExportService, migrationHistoryService, toolingApiService, migrationGenerator, cpqPhaseGenerator, rcaPhaseGenerator, sfdmuRunner, orgService, objectService, queryGenerator; `src/utils/fileUtils.ts`; `src/models/migrationConfig.ts`.
+- **Webview**: `src/webview/ui/index.html`, `styles.css`; `js/` — main, state, configManager, configChangeChecker, messageHandler, migrationObjects, migrationExecution, modals, rollbackManager, rollbackModal; `cpq/` (constants, hierarchicalView, masterObjects, masterSelectionModal, mode, phases, state); `rca/` (constants, execution, masterSelectionModal, metadata, mode, phases, state); cpqMode, rcaMode, uiUtils.
+- **Scripts**: `scripts/copy-webview.js` (build); `scripts/audit-cpq-relationships.js` (standalone CLI: `node scripts/audit-cpq-relationships.js <org-alias>`); `scripts/verify-external-ids.js`, `scripts/verify-soql-fields.js`.
+
+### Build and test
+
 ```bash
 npm run compile
 ```
 
-### Testing
-1. Press `F5` to launch Extension Development Host
-2. In the new window, open Command Palette
-3. Run "SFDMU: Open Migration Panel"
+Press `F5` to launch Extension Development Host; in the new window run **SFDMU: Open Migration Panel**.
 
 ## License
 
@@ -286,6 +115,4 @@ MIT
 
 ## Acknowledgments
 
-- Migration phase structure based on Salto CPQ migration best practices
-- Built on SFDMU (Salesforce Data Move Utility)
-- Uses Salesforce CLI for org management
+Migration phase structure informed by Salto CPQ migration practices. Built on SFDMU (Salesforce Data Move Utility) and Salesforce CLI.
