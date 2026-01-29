@@ -720,6 +720,191 @@
             }, 100);
         },
         
+        showExcelExportConfirm: function(phaseNumber) {
+            const modal = document.getElementById('excel-export-modal');
+            const confirmSection = document.getElementById('excel-export-confirm-section');
+            const progressSection = document.getElementById('excel-export-progress-section');
+            const completeSection = document.getElementById('excel-export-complete-section');
+            const errorSection = document.getElementById('excel-export-error-section');
+            const confirmButton = document.getElementById('excel-export-confirm');
+            const cancelButton = document.getElementById('excel-export-cancel');
+            const closeButton = document.getElementById('excel-export-close');
+            const modalTitle = document.getElementById('excel-export-modal-title');
+            const confirmMessage = document.getElementById('excel-export-confirm-message');
+            const MigrationExecution = window.SFDMU.MigrationExecution;
+            const State = window.SFDMU.State;
+            
+            // Update modal title and message based on mode and phase
+            const mode = State.currentConfig.mode || 'standard';
+            if (phaseNumber && (mode === 'cpq' || mode === 'rca')) {
+                modalTitle.textContent = `Export to Excel - Phase ${phaseNumber}`;
+                confirmMessage.textContent = `This will execute SOQL queries against your source org and export all data for Phase ${phaseNumber} to an Excel file. This may take several minutes depending on the amount of data.`;
+            } else {
+                modalTitle.textContent = 'Export to Excel';
+                confirmMessage.textContent = 'This will execute SOQL queries against your source org and export all data to an Excel file. This may take several minutes depending on the amount of data.';
+            }
+            
+            // Reset modal state
+            confirmSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            completeSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            confirmButton.style.display = 'inline-block';
+            cancelButton.style.display = 'inline-block';
+            closeButton.style.display = 'none';
+            
+            // Reset progress
+            document.getElementById('excel-export-progress-bar').style.width = '0%';
+            document.getElementById('excel-export-progress-percent').textContent = '0%';
+            document.getElementById('excel-export-status-text').textContent = 'Preparing export...';
+            document.getElementById('excel-export-log-content').innerHTML = '';
+            
+            // Setup confirm button
+            confirmButton.onclick = () => {
+                confirmSection.style.display = 'none';
+                progressSection.style.display = 'block';
+                confirmButton.style.display = 'none';
+                cancelButton.style.display = 'none';
+                
+                // Trigger the actual export with phase number
+                if (MigrationExecution && MigrationExecution.proceedWithExcelExport) {
+                    MigrationExecution.proceedWithExcelExport(phaseNumber);
+                }
+            };
+            
+            // Setup cancel button
+            cancelButton.onclick = () => {
+                this.hideExcelExportModal();
+            };
+            
+            // Setup close button
+            closeButton.onclick = () => {
+                this.hideExcelExportModal();
+            };
+            
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            
+            setTimeout(() => {
+                confirmButton.focus();
+            }, 100);
+        },
+        
+        updateExcelExportProgress: function(message, objectName, progress) {
+            const statusText = document.getElementById('excel-export-status-text');
+            const progressBar = document.getElementById('excel-export-progress-bar');
+            const progressPercent = document.getElementById('excel-export-progress-percent');
+            const logContent = document.getElementById('excel-export-log-content');
+            
+            if (progress !== undefined) {
+                const percent = Math.round(progress);
+                progressBar.style.width = percent + '%';
+                progressPercent.textContent = percent + '%';
+            }
+            
+            if (message) {
+                const logEntry = document.createElement('div');
+                logEntry.style.marginBottom = '4px';
+                if (objectName) {
+                    logEntry.innerHTML = `<span style="color: var(--vscode-textLink-foreground);">[${objectName}]</span> ${message}`;
+                } else {
+                    logEntry.textContent = message;
+                }
+                logContent.appendChild(logEntry);
+                
+                // Auto-scroll to bottom
+                const logContainer = document.getElementById('excel-export-log');
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            if (objectName) {
+                statusText.textContent = `Processing ${objectName}...`;
+            } else if (message) {
+                statusText.textContent = message;
+            }
+        },
+        
+        showExcelExportComplete: function(filePath) {
+            const progressSection = document.getElementById('excel-export-progress-section');
+            const completeSection = document.getElementById('excel-export-complete-section');
+            const closeButton = document.getElementById('excel-export-close');
+            const fileLink = document.getElementById('excel-export-file-link');
+            const statusText = document.getElementById('excel-export-status-text');
+            
+            // Keep progress section visible - don't hide it
+            // progressSection.style.display = 'none'; // REMOVED - keep progress visible
+            completeSection.style.display = 'block';
+            closeButton.style.display = 'inline-block';
+            
+            // Update progress to 100%
+            document.getElementById('excel-export-progress-bar').style.width = '100%';
+            document.getElementById('excel-export-progress-percent').textContent = '100%';
+            statusText.textContent = 'Export completed successfully!';
+            
+            // Add success message to log
+            const logContent = document.getElementById('excel-export-log-content');
+            const successEntry = document.createElement('div');
+            successEntry.style.marginBottom = '4px';
+            successEntry.style.color = 'var(--vscode-testing-iconPassed)';
+            successEntry.style.fontWeight = '600';
+            successEntry.textContent = '✓ Excel file generated successfully!';
+            logContent.appendChild(successEntry);
+            
+            // Auto-scroll to bottom
+            const logContainer = document.getElementById('excel-export-log');
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Setup file link - use full path so openFile opens the file (e.g. in phase folder)
+            fileLink.onclick = (e) => {
+                e.preventDefault();
+                vscode.postMessage({
+                    command: 'openFile',
+                    filePath: filePath
+                });
+            };
+            // Show path relative to output: "Phase N/filename.xlsx" when in phase folder, else filename
+            const parts = filePath.split(/[/\\]/);
+            const filename = parts.pop();
+            const parentDir = parts.pop() || '';
+            const isPhaseFolder = /^Phase \d+$/i.test(parentDir);
+            fileLink.textContent = isPhaseFolder ? parentDir + '/' + filename : filename;
+        },
+        
+        showExcelExportError: function(error) {
+            const progressSection = document.getElementById('excel-export-progress-section');
+            const errorSection = document.getElementById('excel-export-error-section');
+            const closeButton = document.getElementById('excel-export-close');
+            const errorMessage = document.getElementById('excel-export-error-message');
+            const statusText = document.getElementById('excel-export-status-text');
+            
+            // Keep progress section visible - don't hide it
+            // progressSection.style.display = 'none'; // REMOVED - keep progress visible
+            errorSection.style.display = 'block';
+            closeButton.style.display = 'inline-block';
+            errorMessage.textContent = error || 'An unknown error occurred';
+            statusText.textContent = 'Export failed';
+            statusText.style.color = 'var(--vscode-errorForeground)';
+            
+            // Add error message to log
+            const logContent = document.getElementById('excel-export-log-content');
+            const errorEntry = document.createElement('div');
+            errorEntry.style.marginBottom = '4px';
+            errorEntry.style.color = 'var(--vscode-errorForeground)';
+            errorEntry.style.fontWeight = '600';
+            errorEntry.textContent = `✗ Export failed: ${error || 'An unknown error occurred'}`;
+            logContent.appendChild(errorEntry);
+            
+            // Auto-scroll to bottom
+            const logContainer = document.getElementById('excel-export-log');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        },
+        
+        hideExcelExportModal: function() {
+            const modal = document.getElementById('excel-export-modal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        },
+        
         showObjectFilter: function(objectName, objectIndex, currentWhereClause, currentOrderByClause, currentLimitClause) {
             const modal = document.getElementById('object-filter-modal');
             const title = document.getElementById('object-filter-modal-title');
@@ -963,7 +1148,6 @@
                     
                     if (message.fields && message.fields.length > 0) {
                         filterModalFields = message.fields;
-                        console.log('Loaded fields:', filterModalFields.length);
                         
                         // Trigger autocomplete if user is typing in WHERE clause
                         const cursorPos = whereInput.selectionStart;
@@ -974,7 +1158,6 @@
                         }
                     } else {
                         filterModalFields = [];
-                        console.log('No fields loaded');
                     }
                 }
             };

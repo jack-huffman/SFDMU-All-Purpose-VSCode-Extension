@@ -9,6 +9,7 @@
     const MigrationObjects = window.SFDMU.MigrationObjects;
     const MigrationExecution = window.SFDMU.MigrationExecution;
     const CpqMode = window.SFDMU.CpqMode;
+    const RcaMode = window.SFDMU.RcaMode;
     // Don't capture Explorer at module load - get it dynamically
     const Modals = window.SFDMU.Modals;
     
@@ -22,7 +23,7 @@
             
             window.addEventListener('message', event => {
                 const message = event.data;
-                console.log('MessageHandler received:', message.command, message);
+                // console.log('MessageHandler received:', message.command, message);
                 
                 switch (message.command) {
                     case 'externalIdDetected':
@@ -95,6 +96,22 @@
                                 fields: message.fields,
                                 timestamp: Date.now()
                             };
+                        }
+                        
+                        // Handle master selection modal filter autocomplete
+                        if (window.masterSelectionModalState && message.objectName && message.fields) {
+                            if (!window.masterSelectionModalState.fieldMetadata) {
+                                window.masterSelectionModalState.fieldMetadata = {};
+                            }
+                            window.masterSelectionModalState.fieldMetadata[message.objectName] = message.fields;
+                            
+                            // Re-render filter section if it's visible to update autocomplete
+                            const filtersSection = document.getElementById(`master-selection-filters-${message.objectName}`);
+                            if (filtersSection && filtersSection.style.display !== 'none') {
+                                if (window.SFDMU && window.SFDMU.Cpq && window.SFDMU.Cpq.renderFilterSection) {
+                                    window.SFDMU.Cpq.renderFilterSection(message.objectName);
+                                }
+                            }
                         }
                         
                         // Handle external ID selection modal
@@ -259,7 +276,6 @@
                         
                     case 'configTree':
                         // Config tree is now rendered by VS Code's native Tree View, not the webview.
-                        console.log('Received config tree (handled by native Tree View):', message.tree);
                         break;
 
                     case 'startNewConfigInFolder':
@@ -267,7 +283,8 @@
                         // This reuses the existing ConfigManager logic that the legacy
                         // in-webview explorer used.
                         if (window.SFDMU.ConfigManager && typeof window.SFDMU.ConfigManager.createNewInFolder === 'function') {
-                            window.SFDMU.ConfigManager.createNewInFolder(message.folderPath || '');
+                            const mode = message.mode || 'standard';
+                            window.SFDMU.ConfigManager.createNewInFolder(message.folderPath || '', mode);
                         } else {
                             console.error('ConfigManager.createNewInFolder is not available');
                         }
@@ -288,6 +305,11 @@
                         setTimeout(() => {
                             if (window.SFDMU && window.SFDMU.ConfigManager && typeof window.SFDMU.ConfigManager.loadConfig === 'function') {
                                 window.SFDMU.ConfigManager.loadConfig(message.config, message.name || message.config.configName);
+                                
+                                // Check for backups when config is loaded
+                                if (window.SFDMU.RollbackManager && message.config && message.config.configName) {
+                                    window.SFDMU.RollbackManager.checkBackups(message.config.configName);
+                                }
                             } else {
                                 console.error('ConfigManager.loadConfig is not available', {
                                     hasSFDMU: !!window.SFDMU,
@@ -314,9 +336,80 @@
                         break;
                         
                     case 'configDeleted':
-                        State.selectedConfigPath = null;
-                        if (message.name === State.selectedConfigPath) {
-                            window.SFDMU.UIUtils.hideConfigPanel();
+                        // Check if the deleted config is the currently open one
+                        const deletedConfigName = message.name || '';
+                        const currentConfigName = State.currentConfig?.configName || State.selectedConfigPath || '';
+                        
+                        // Normalize config names for comparison (remove .json extension and normalize slashes)
+                        const normalizeConfigName = (name) => {
+                            if (!name) return '';
+                            // Remove .json extension if present
+                            let normalized = name.endsWith('.json') ? name.slice(0, -5) : name;
+                            // Normalize path separators (both / and \ should work)
+                            normalized = normalized.replace(/\\/g, '/');
+                            return normalized;
+                        };
+                        
+                        const normalizedDeleted = normalizeConfigName(deletedConfigName);
+                        const normalizedCurrent = normalizeConfigName(currentConfigName);
+                        
+                        // If the deleted config matches the currently open config, navigate to initialization screen
+                        if (normalizedDeleted && normalizedCurrent && normalizedDeleted === normalizedCurrent) {
+                            // Clear the current config - reset to default state
+                            const defaultConfig = {
+                                mode: 'standard',
+                                objects: [],
+                                selectedPhases: [],
+                                completedPhases: [],
+                                includeProduct2: false,
+                                sourceOrg: { username: '', instanceUrl: '' },
+                                targetOrg: { username: '', instanceUrl: '' },
+                                operation: 'Upsert',
+                                modifiedSince: '',
+                                customFilters: [],
+                                excludedObjects: [],
+                                outputDir: 'sfdmu-migration'
+                            };
+                            State.currentConfig = defaultConfig;
+                            State.selectedConfigPath = null;
+                            State.currentFolderPath = null;
+                            State.lastGeneratedConfig = null;
+                            
+                            // Reset config name header
+                            const configNameHeader = document.getElementById('config-name-header');
+                            if (configNameHeader) {
+                                configNameHeader.textContent = 'SFDMU Migration';
+                            }
+                            
+            // Mode selector has been removed - mode is set at config creation time
+                            
+                            // Navigate to initialization screen
+                            if (window.SFDMU.UIUtils) {
+                                window.SFDMU.UIUtils.hideConfigPanel();
+                            }
+                            
+                            // Clear any mode-specific state
+                            if (window.SFDMU.CpqMode && window.SFDMU.CpqMode.reset) {
+                                window.SFDMU.CpqMode.reset();
+                            }
+                            if (window.SFDMU.RcaMode && window.SFDMU.RcaMode.reset) {
+                                window.SFDMU.RcaMode.reset();
+                            }
+                            
+                            // Reset migration execution state
+                            if (window.SFDMU.MigrationExecution && window.SFDMU.MigrationExecution.updateGenerateButtonText) {
+                                window.SFDMU.MigrationExecution.updateGenerateButtonText(false);
+                            }
+                            
+                            // Clear config change checker badges
+                            if (window.SFDMU.ConfigChangeChecker && window.SFDMU.ConfigChangeChecker.removeBadges) {
+                                window.SFDMU.ConfigChangeChecker.removeBadges();
+                            }
+                        } else {
+                            // Just clear the selected path if it was the deleted one
+                            if (State.selectedConfigPath && normalizeConfigName(State.selectedConfigPath) === normalizedDeleted) {
+                                State.selectedConfigPath = null;
+                            }
                         }
                         break;
                         
@@ -379,6 +472,127 @@
                             CpqMode.handlePhaseDefinitions(message.phases || []);
                         }
                         break;
+
+                    case 'cpqMasterRecords':
+                        // Route to CPQ or RCA based on mode
+                        if (message.mode === 'rca') {
+                            if (window.SFDMU.Rca && window.SFDMU.Rca.handleMasterRecords) {
+                                window.SFDMU.Rca.handleMasterRecords(
+                                    message.objectName,
+                                    message.records,
+                                    message.phaseNumber,
+                                    message.isSearch || false,
+                                    message.append || false
+                                );
+                            }
+                        } else {
+                            if (CpqMode && CpqMode.handleMasterRecords) {
+                                CpqMode.handleMasterRecords(
+                                    message.objectName,
+                                    message.records,
+                                    message.phaseNumber,
+                                    message.isSearch || false,
+                                    message.append || false
+                                );
+                            }
+                        }
+                        break;
+                        
+                    case 'cpqMasterRecordsError':
+                        // Route to CPQ or RCA based on mode
+                        if (message.mode === 'rca') {
+                            if (window.SFDMU.Rca && window.SFDMU.Rca.handleMasterRecords) {
+                                window.SFDMU.Rca.handleMasterRecords(
+                                    message.objectName,
+                                    [],
+                                    message.phaseNumber,
+                                    false,
+                                    false
+                                );
+                            }
+                        } else {
+                            if (CpqMode && CpqMode.handleMasterRecords) {
+                                // Handle error by passing empty array
+                                CpqMode.handleMasterRecords(
+                                    message.objectName,
+                                    [],
+                                    message.phaseNumber,
+                                    false,
+                                    false
+                                );
+                            }
+                        }
+                        vscode.postMessage({ 
+                            command: 'showError', 
+                            message: `Failed to load records for ${message.objectName}: ${message.error}` 
+                        });
+                        break;
+                        
+                    case 'inheritedLineColumns':
+                        if (CpqMode && CpqMode.handleInheritedLineColumns) {
+                            CpqMode.handleInheritedLineColumns(
+                                message.records,
+                                message.lineColumnsBySection,
+                                message.phaseNumber
+                            );
+                        }
+                        break;
+                        
+                    case 'inheritedLineColumnsError':
+                        vscode.postMessage({ 
+                            command: 'showError', 
+                            message: `Failed to load inherited Line Columns: ${message.error}` 
+                        });
+                        break;
+
+                    case 'childRecords':
+                        if (CpqMode && CpqMode.handleChildRecords) {
+                            CpqMode.handleChildRecords(
+                                message.parentObjectName,
+                                message.childObjectName,
+                                message.records,
+                                message.childRecordsByParent,
+                                message.phaseNumber
+                            );
+                        }
+                        break;
+                        
+                    case 'childRecordsError':
+                        vscode.postMessage({ 
+                            command: 'showError', 
+                            message: `Failed to load child records for ${message.parentObjectName}: ${message.error}` 
+                        });
+                        break;
+
+                    case 'queriedChildRecords':
+                        // Handle queried child records for Selected Parent Records section
+                        if (CpqMode && window.SFDMU.Cpq && window.SFDMU.Cpq.handleQueriedChildRecords) {
+                            const { phaseNumber, parentObjectName, childObjectName, childRecordsByParentExternalId } = message;
+                            // childRecordsByParentExternalId is { parentExternalId: [childRecords] }
+                            Object.keys(childRecordsByParentExternalId || {}).forEach(parentExternalId => {
+                                const childRecords = childRecordsByParentExternalId[parentExternalId] || [];
+                                window.SFDMU.Cpq.handleQueriedChildRecords(
+                                    phaseNumber,
+                                    parentObjectName,
+                                    parentExternalId,
+                                    childObjectName,
+                                    childRecords
+                                );
+                            });
+                        }
+                        break;
+
+                    case 'rcaPhaseDefinitions':
+                        if (RcaMode && RcaMode.handlePhaseDefinitions) {
+                            RcaMode.handlePhaseDefinitions(message.phases || []);
+                        }
+                        break;
+
+                    case 'metadataDeployed':
+                        if (RcaMode && RcaMode.handleMetadataDeployed) {
+                            RcaMode.handleMetadataDeployed(message);
+                        }
+                        break;
                         
                     case 'requestConfigConflictResolution':
                         // Show conflict resolution modal and send back the result
@@ -395,6 +609,129 @@
                                 });
                             });
                         }
+                        break;
+                        
+                    case 'excelExportProgress':
+                        if (Modals && Modals.updateExcelExportProgress) {
+                            Modals.updateExcelExportProgress(message.message, message.objectName, message.progress);
+                        }
+                        break;
+                        
+                    case 'excelExportComplete':
+                        if (Modals && Modals.showExcelExportComplete) {
+                            Modals.showExcelExportComplete(message.filePath);
+                        }
+                        break;
+                        
+                    case 'excelExportError':
+                        if (Modals && Modals.showExcelExportError) {
+                            Modals.showExcelExportError(message.error);
+                        }
+                        break;
+                        
+                    case 'cpqPhaseObjects':
+                        // Store objects for CPQ phase confirmation modals
+                        if (!window.cpqPhaseObjectsCache) {
+                            window.cpqPhaseObjectsCache = {};
+                        }
+                        window.cpqPhaseObjectsCache[message.phaseNumber] = {
+                            objects: message.objects || [],
+                            error: message.error,
+                            timestamp: Date.now()
+                        };
+                        // Trigger custom event for waiting promises
+                        window.dispatchEvent(new CustomEvent('cpqPhaseObjectsReceived', {
+                            detail: { phaseNumber: message.phaseNumber, objects: message.objects || [], error: message.error }
+                        }));
+                        break;
+
+                    case 'phaseBackupsStatus':
+                        // Store which phases have backups; show rollback button only for current phase if it has backups
+                        if (window.SFDMU.Cpq) {
+                            window.SFDMU.Cpq.phasesWithBackups = message.phasesWithBackups || [];
+                            const activePhaseTab = window.SFDMU.Cpq.getActivePhaseTab && window.SFDMU.Cpq.getActivePhaseTab();
+                            if (activePhaseTab != null) {
+                                const rollbackBtn = document.getElementById('rollback-phase-' + activePhaseTab);
+                                if (rollbackBtn) {
+                                    rollbackBtn.style.display = window.SFDMU.Cpq.phasesWithBackups.includes(activePhaseTab) ? 'inline-flex' : 'none';
+                                }
+                            }
+                        }
+                        break;
+
+                    case 'backupCreated':
+                        // Backup was created; update rollback button visibility (header in standard mode, phase button in CPQ/RCA)
+                        if (message.phaseNumber != null && (State.currentConfig?.mode === 'cpq' || State.currentConfig?.mode === 'rca')) {
+                            if (window.SFDMU.Cpq) {
+                                if (!window.SFDMU.Cpq.phasesWithBackups) {
+                                    window.SFDMU.Cpq.phasesWithBackups = [];
+                                }
+                                if (!window.SFDMU.Cpq.phasesWithBackups.includes(message.phaseNumber)) {
+                                    window.SFDMU.Cpq.phasesWithBackups.push(message.phaseNumber);
+                                }
+                                const activePhaseTab = window.SFDMU.Cpq.getActivePhaseTab && window.SFDMU.Cpq.getActivePhaseTab();
+                                if (activePhaseTab === message.phaseNumber) {
+                                    const rollbackBtn = document.getElementById('rollback-phase-' + message.phaseNumber);
+                                    if (rollbackBtn) {
+                                        rollbackBtn.style.display = 'inline-flex';
+                                    }
+                                }
+                            }
+                        } else if (window.SFDMU.RollbackManager) {
+                            window.SFDMU.RollbackManager.checkBackups(State.currentConfig?.configName);
+                        }
+                        break;
+
+                    case 'backupsLoaded':
+                        // Update rollback manager with available backups
+                        if (window.SFDMU.RollbackManager) {
+                            window.SFDMU.RollbackManager.updateBackups(message.backups);
+                        }
+                        break;
+
+                    case 'rollbackModalData':
+                        // Update rollback modal with backup data
+                        if (window.SFDMU.RollbackModal) {
+                            if (message.error) {
+                                vscode.postMessage({
+                                    command: 'showError',
+                                    message: message.error
+                                });
+                            } else {
+                                window.SFDMU.RollbackModal.updateBackups(
+                                    message.backups,
+                                    message.selectedBackup,
+                                    message.rollbackConfig
+                                );
+                            }
+                        }
+                        break;
+
+                    case 'rollbackCompleted':
+                        // Rollback execution completed
+                        if (message.success) {
+                            vscode.postMessage({
+                                command: 'showInfo',
+                                message: `Rollback completed successfully. Records processed: ${message.recordsProcessed || 0}`
+                            });
+                        } else {
+                            const errorMsg = message.errors && message.errors.length > 0
+                                ? message.errors.join('; ')
+                                : 'Rollback failed';
+                            vscode.postMessage({
+                                command: 'showError',
+                                message: `Rollback failed: ${errorMsg}`
+                            });
+                        }
+                        // Refresh backup list
+                        if (window.SFDMU.RollbackManager && State.currentConfig?.configName) {
+                            window.SFDMU.RollbackManager.checkBackups(State.currentConfig.configName);
+                        }
+                        break;
+
+                    case 'showMigrationCompletionModal':
+                        // Show migration completion modal
+                        window.SFDMU.MessageHandler.showMigrationCompletionModal(message);
                         break;
                 }
             });
@@ -414,6 +751,56 @@
             
             updateSelect(sourceSelect);
             updateSelect(targetSelect);
+        },
+
+        showMigrationCompletionModal: function(message) {
+            const modal = document.getElementById('migration-completion-modal');
+            const title = document.getElementById('migration-completion-title');
+            const messageEl = document.getElementById('migration-completion-message');
+            const confirmBtn = document.getElementById('migration-completion-confirm');
+            const skipBtn = document.getElementById('migration-completion-skip');
+
+            if (!modal) return;
+
+            // Update modal content
+            const phaseText = message.phaseNumber ? ` Phase ${message.phaseNumber}` : '';
+            title.textContent = `${message.migrationType || 'Migration'}${phaseText} Running`;
+            messageEl.textContent = `The${phaseText} ${message.migrationType || 'migration'} is running in the terminal. You can interact with the terminal freely.`;
+
+            // Store migration key for confirmation
+            modal.dataset.migrationKey = message.migrationKey || '';
+
+            // Set up button handlers (remove old listeners first)
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            const newSkipBtn = skipBtn.cloneNode(true);
+            skipBtn.parentNode.replaceChild(newSkipBtn, skipBtn);
+
+            newConfirmBtn.addEventListener('click', () => {
+                vscode.postMessage({
+                    command: 'confirmMigrationComplete',
+                    migrationKey: modal.dataset.migrationKey
+                });
+                modal.classList.remove('show');
+            });
+
+            newSkipBtn.addEventListener('click', () => {
+                vscode.postMessage({
+                    command: 'skipMigrationBackup',
+                    migrationKey: modal.dataset.migrationKey
+                });
+                modal.classList.remove('show');
+            });
+
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+
+            // Show modal
+            modal.classList.add('show');
         }
     };
 })();

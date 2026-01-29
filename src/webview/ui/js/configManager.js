@@ -86,6 +86,17 @@
                 State.currentConfig.includeProduct2 = false;
             }
             
+            // Initialize selectedMasterRecords if not present
+            if (!State.currentConfig.selectedMasterRecords) {
+                // Don't clear selectedMasterRecords when loading config - preserve them
+                // State.currentConfig.selectedMasterRecords = {};
+            }
+            
+            // Initialize queriedChildRecords if not present
+            if (!State.currentConfig.queriedChildRecords) {
+                State.currentConfig.queriedChildRecords = {};
+            }
+            
             // Initialize excludedObjects if not present
             if (!State.currentConfig.excludedObjects) {
                 State.currentConfig.excludedObjects = [];
@@ -105,7 +116,39 @@
             State.currentConfig.outputDir = outputDir;
             
             // Update UI
-            document.getElementById('dml-operation').value = config.operation || 'Upsert';
+            const dmlSelect = document.getElementById('dml-operation');
+            if (dmlSelect) {
+                // In CPQ/RCA mode, show the operation for the active phase if available
+                const mode = config.mode || 'standard';
+                if (mode === 'cpq' && config.cpqPhaseOperations) {
+                    // Get active phase tab if available
+                    const activePhase = window.SFDMU?.Cpq?.getActivePhaseTab?.() || 1;
+                    const phaseOperation = config.cpqPhaseOperations[activePhase] || config.operation || 'Upsert';
+                    dmlSelect.value = phaseOperation;
+                } else if (mode === 'rca' && config.rcaPhaseOperations) {
+                    // For RCA, default to phase 1 or first phase with operation
+                    const firstPhaseWithOp = Object.keys(config.rcaPhaseOperations).length > 0 
+                        ? parseInt(Object.keys(config.rcaPhaseOperations)[0])
+                        : 1;
+                    const phaseOperation = config.rcaPhaseOperations[firstPhaseWithOp] || config.operation || 'Upsert';
+                    dmlSelect.value = phaseOperation;
+                } else {
+                    dmlSelect.value = config.operation || 'Upsert';
+                }
+            }
+            
+            // Update mode badge
+            const modeBadge = document.getElementById('mode-badge');
+            const modeBadgeLabel = document.getElementById('mode-badge-label');
+            if (modeBadge && modeBadgeLabel) {
+                const mode = State.currentConfig.mode || 'standard';
+                const modeLabels = {
+                    'standard': 'Standard',
+                    'cpq': 'CPQ',
+                    'rca': 'RCA'
+                };
+                modeBadgeLabel.textContent = modeLabels[mode] || 'Standard';
+            }
             
             // Show the config panel
             UIUtils.showConfigPanel();
@@ -195,13 +238,23 @@
                 window.SFDMU.MigrationExecution.checkPhaseFiles();
             }
 
-            // Apply mode-specific UI (Objects vs CPQ) based on the loaded config
+            // Apply mode-specific UI (Objects/CPQ/RCA) based on the loaded config
+            // RcaMode handles all mode switching, so call it first
+            if (window.SFDMU.RcaMode && window.SFDMU.RcaMode.applyModeFromConfig) {
+                window.SFDMU.RcaMode.applyModeFromConfig();
+            }
+            // Then call CPQ-specific initialization if needed
             if (window.SFDMU.CpqMode && window.SFDMU.CpqMode.applyModeFromConfig) {
                 window.SFDMU.CpqMode.applyModeFromConfig();
             }
+
+            // Check for backups when config is loaded
+            if (window.SFDMU.RollbackManager && config.configName) {
+                window.SFDMU.RollbackManager.checkBackups(config.configName);
+            }
         },
         
-        createNewInFolder: function(folderPath) {
+        createNewInFolder: function(folderPath, mode = 'standard') {
             const State = getState();
             if (!State) {
                 console.error('State is not initialized');
@@ -211,13 +264,14 @@
             // Store the folder path separately
             State.currentFolderPath = folderPath || null;
             
-            // Reset to default config
+            // Reset to default config with specified mode
             State.currentConfig = {
-                mode: 'standard',
+                mode: mode,
                 objects: [],
                 selectedPhases: [],
                 completedPhases: [],
                 includeProduct2: false,
+                selectedMasterRecords: {},
                 sourceOrg: { username: '', instanceUrl: '' },
                 targetOrg: { username: '', instanceUrl: '' },
                 operation: 'Upsert',
@@ -251,6 +305,18 @@
                 window.SFDMU.MigrationObjects.renderExcludedObjects();
             }
             
+            // Update mode badge
+            const modeBadge = document.getElementById('mode-badge');
+            const modeBadgeLabel = document.getElementById('mode-badge-label');
+            if (modeBadge && modeBadgeLabel) {
+                const modeLabels = {
+                    'standard': 'Standard',
+                    'cpq': 'CPQ',
+                    'rca': 'RCA'
+                };
+                modeBadgeLabel.textContent = modeLabels[mode] || 'Standard';
+            }
+            
             // Show the config panel
             UIUtils.showConfigPanel();
             
@@ -271,6 +337,11 @@
             }
 
             // Ensure UI reflects the default mode for a new configuration
+            // RcaMode handles all mode switching, so call it first
+            if (window.SFDMU.RcaMode && window.SFDMU.RcaMode.applyModeFromConfig) {
+                window.SFDMU.RcaMode.applyModeFromConfig();
+            }
+            // Then call CPQ-specific initialization if needed
             if (window.SFDMU.CpqMode && window.SFDMU.CpqMode.applyModeFromConfig) {
                 window.SFDMU.CpqMode.applyModeFromConfig();
             }
@@ -294,6 +365,11 @@
                     alias: alias || State.currentConfig[`${type}Org`]?.alias
                 };
             });
+            
+            // Update CPQ phase button states if in CPQ mode
+            if (State.currentConfig.mode === 'cpq' && window.SFDMU.Cpq && window.SFDMU.Cpq.updatePhaseButtonStates) {
+                window.SFDMU.Cpq.updatePhaseButtonStates();
+            }
             
             // Check for config changes after updating orgs
             if (!State.isCheckingConfigChanges && window.SFDMU.ConfigChangeChecker) {
@@ -392,6 +468,7 @@
                 })),
                 selectedPhases: (config.selectedPhases || []).slice().sort(),
                 includeProduct2: !!config.includeProduct2,
+                selectedMasterRecords: config.selectedMasterRecords || {},
                 operation: config.operation || 'Upsert',
                 modifiedSince: config.modifiedSince || '',
                 customFilters: (config.customFilters || []).map(f => ({

@@ -31,3 +31,8 @@ yarn-error.log*
 .env
 .env.local
 
+# Reference markdown (keep only README and LICENSE)
+markdown/
+*.md
+!README.md
+!LICENSE.md

@@ -44,8 +44,18 @@
         "icon": "$(file-directory-create)"
       },
       {
-        "command": "sfdmu-all-purpose.createConfigInFolder",
-        "title": "New Configuration",
+        "command": "sfdmu-all-purpose.createStandardConfigInFolder",
+        "title": "New Standard Configuration",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.createCpqConfigInFolder",
+        "title": "New CPQ Configuration",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.createRcaConfigInFolder",
+        "title": "New RCA Configuration",
         "category": "SFDMU"
       },
       {
@@ -66,6 +76,11 @@
       {
         "command": "sfdmu-all-purpose.renameConfigFolder",
         "title": "Rename",
+        "category": "SFDMU"
+      },
+      {
+        "command": "sfdmu-all-purpose.confirmMigrationComplete",
+        "title": "Confirm Migration Complete",
         "category": "SFDMU"
       }
     ],
@@ -105,12 +120,22 @@
         {
           "command": "sfdmu-all-purpose.createConfigFolder",
           "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
-          "group": "2_new"
+          "group": "2_new@1"
         },
         {
-          "command": "sfdmu-all-purpose.createConfigInFolder",
+          "command": "sfdmu-all-purpose.createStandardConfigInFolder",
           "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
-          "group": "2_new"
+          "group": "2_new@2"
+        },
+        {
+          "command": "sfdmu-all-purpose.createCpqConfigInFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "2_new@3"
+        },
+        {
+          "command": "sfdmu-all-purpose.createRcaConfigInFolder",
+          "when": "view == sfdmuMigration && viewItem == sfdmuFolder",
+          "group": "2_new@4"
         },
         {
           "command": "sfdmu-all-purpose.deleteConfigFolder",
@@ -135,6 +160,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@vscode/codicons": "^0.0.44"
+    "@vscode/codicons": "^0.0.44",
+    "exceljs": "^4.4.0"
   }
 }

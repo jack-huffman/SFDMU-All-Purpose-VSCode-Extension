@@ -10,6 +10,8 @@
             const gettingStarted = document.getElementById('getting-started');
             const headerActions = document.getElementById('header-actions');
             const configNameHeader = document.getElementById('config-name-header');
+            const modeBadge = document.getElementById('mode-badge');
+            const headerOrgSelection = document.querySelector('.header-org-selection');
             
             if (mainContent) {
                 mainContent.style.display = 'flex';
@@ -26,6 +28,12 @@
             if (configNameHeader) {
                 configNameHeader.style.display = '';
             }
+            if (modeBadge) {
+                modeBadge.style.display = 'flex';
+            }
+            if (headerOrgSelection) {
+                headerOrgSelection.style.display = 'flex';
+            }
         },
         
         hideConfigPanel: function() {
@@ -33,6 +41,8 @@
             const gettingStarted = document.getElementById('getting-started');
             const headerActions = document.getElementById('header-actions');
             const configNameHeader = document.getElementById('config-name-header');
+            const modeBadge = document.getElementById('mode-badge');
+            const headerOrgSelection = document.querySelector('.header-org-selection');
             
             if (mainContent) {
                 mainContent.style.display = 'none';
@@ -49,13 +59,21 @@
             if (configNameHeader) {
                 configNameHeader.style.display = 'none';
             }
+            if (modeBadge) {
+                modeBadge.style.display = 'none';
+            }
+            if (headerOrgSelection) {
+                headerOrgSelection.style.display = 'none';
+            }
         },
         
-        showConfirmation: function(title, message) {
+        showConfirmation: function(title, message, objects) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirm-modal');
                 const titleEl = document.getElementById('modal-title');
                 const messageEl = document.getElementById('modal-message');
+                const objectsSection = document.getElementById('modal-objects-section');
+                const objectsList = document.getElementById('modal-objects-list');
                 const confirmButton = document.getElementById('modal-confirm');
                 const cancelButton = document.getElementById('modal-cancel');
                 
@@ -70,6 +88,59 @@
                 // Set modal content
                 titleEl.textContent = title;
                 messageEl.textContent = message;
+                
+                // Show/hide objects section based on whether objects are provided
+                if (objects && objects.length > 0) {
+                    objectsSection.style.display = 'block';
+                    objectsList.innerHTML = '';
+                    
+                    objects.forEach(obj => {
+                        const objItem = document.createElement('div');
+                        objItem.style.marginBottom = '10px';
+                        objItem.style.paddingBottom = '10px';
+                        objItem.style.borderBottom = '1px solid var(--vscode-panel-border)';
+                        
+                        const objName = document.createElement('div');
+                        objName.style.fontWeight = '600';
+                        objName.style.fontSize = '13px';
+                        objName.style.marginBottom = '4px';
+                        objName.style.color = 'var(--vscode-foreground)';
+                        objName.textContent = obj.objectName || 'Unknown';
+                        
+                        const objDetails = document.createElement('div');
+                        objDetails.style.fontSize = '11px';
+                        objDetails.style.color = 'var(--vscode-descriptionForeground)';
+                        objDetails.style.lineHeight = '1.5';
+                        objDetails.style.wordBreak = 'break-word';
+                        const details = [];
+                        if (obj.externalId && obj.externalId !== 'N/A') {
+                            details.push(`External ID: ${obj.externalId}`);
+                        }
+                        if (obj.operation) {
+                            details.push(`Operation: ${obj.operation}`);
+                        }
+                        if (obj.master === false) {
+                            details.push('(Child)');
+                        }
+                        objDetails.textContent = details.join(' • ');
+                        
+                        objItem.appendChild(objName);
+                        objItem.appendChild(objDetails);
+                        objectsList.appendChild(objItem);
+                    });
+                    
+                    // Remove border from last item
+                    if (objects.length > 0) {
+                        const lastItem = objectsList.lastElementChild;
+                        if (lastItem) {
+                            lastItem.style.borderBottom = 'none';
+                            lastItem.style.marginBottom = '0';
+                            lastItem.style.paddingBottom = '0';
+                        }
+                    }
+                } else {
+                    objectsSection.style.display = 'none';
+                }
                 
                 // Show modal
                 modal.style.display = 'flex';

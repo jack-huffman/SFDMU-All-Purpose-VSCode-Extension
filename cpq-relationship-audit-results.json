@@ -1,0 +1,245 @@
+{
+  "relationshipFields": {
+    "SBQQ__ErrorCondition__c": {
+      "SBQQ__ProductRule__c": [
+        {
+          "name": "SBQQ__Rule__c",
+          "relationshipName": "SBQQ__Rule__r",
+          "type": "reference",
+          "label": "Rule"
+        }
+      ]
+    },
+    "SBQQ__LookupQuery__c": {
+      "SBQQ__ProductRule__c": [
+        {
+          "name": "SBQQ__ProductRule__c",
+          "relationshipName": "SBQQ__ProductRule__r",
+          "type": "reference",
+          "label": "Product Rule"
+        }
+      ],
+      "SBQQ__PriceRule__c": [
+        {
+          "name": "SBQQ__PriceRule2__c",
+          "relationshipName": "SBQQ__PriceRule2__r",
+          "type": "reference",
+          "label": "Price Rule"
+        }
+      ]
+    },
+    "SBQQ__ProductAction__c": {
+      "SBQQ__ProductRule__c": [
+        {
+          "name": "SBQQ__Rule__c",
+          "relationshipName": "SBQQ__Rule__r",
+          "type": "reference",
+          "label": "Rule"
+        }
+      ]
+    },
+    "SBQQ__PriceCondition__c": {
+      "SBQQ__PriceRule__c": [
+        {
+          "name": "SBQQ__Rule__c",
+          "relationshipName": "SBQQ__Rule__r",
+          "type": "reference",
+          "label": "Price Rule"
+        }
+      ]
+    },
+    "SBQQ__PriceAction__c": {
+      "SBQQ__PriceRule__c": [
+        {
+          "name": "SBQQ__Rule__c",
+          "relationshipName": "SBQQ__Rule__r",
+          "type": "reference",
+          "label": "Rule"
+        }
+      ]
+    },
+    "SBQQ__LineColumn__c": {
+      "SBQQ__TemplateSection__c": [
+        {
+          "name": "SBQQ__Section__c",
+          "relationshipName": "SBQQ__Section__r",
+          "type": "reference",
+          "label": "Section"
+        }
+      ]
+    },
+    "SBQQ__ProcessInput__c": {
+      "SBQQ__QuoteProcess__c": [
+        {
+          "name": "SBQQ__QuoteProcess__c",
+          "relationshipName": "SBQQ__QuoteProcess__r",
+          "type": "reference",
+          "label": "Quote Process"
+        }
+      ]
+    },
+    "SBQQ__ProcessInputCondition__c": {
+      "SBQQ__ProcessInput__c": [
+        {
+          "name": "SBQQ__ProcessInput__c",
+          "relationshipName": "SBQQ__ProcessInput__r",
+          "type": "reference",
+          "label": "Process Input"
+        },
+        {
+          "name": "SBQQ__MasterProcessInput__c",
+          "relationshipName": "SBQQ__MasterProcessInput__r",
+          "type": "reference",
+          "label": "Master Process Input"
+        }
+      ]
+    },
+    "SBQQ__CustomActionCondition__c": {
+      "SBQQ__CustomAction__c": [
+        {
+          "name": "SBQQ__CustomAction__c",
+          "relationshipName": "SBQQ__CustomAction__r",
+          "type": "reference",
+          "label": "Custom Action"
+        }
+      ]
+    },
+    "SBQQ__ImportColumn__c": {
+      "SBQQ__ImportFormat__c": [
+        {
+          "name": "SBQQ__ImportFormat__c",
+          "relationshipName": "SBQQ__ImportFormat__r",
+          "type": "reference",
+          "label": "Import Format"
+        }
+      ]
+    }
+  },
+  "product2Lookups": {
+    "SBQQ__ProductFeature__c": [
+      {
+        "lookupField": "SBQQ__ConfiguredSKU__c",
+        "relationshipName": "SBQQ__ConfiguredSKU__r",
+        "type": "reference",
+        "label": "Configured SKU"
+      }
+    ],
+    "SBQQ__ProductOption__c": [
+      {
+        "lookupField": "SBQQ__ConfiguredSKU__c",
+        "relationshipName": "SBQQ__ConfiguredSKU__r",
+        "type": "reference",
+        "label": "Configured SKU"
+      },
+      {
+        "lookupField": "SBQQ__OptionalSKU__c",
+        "relationshipName": "SBQQ__OptionalSKU__r",
+        "type": "reference",
+        "label": "Optional SKU"
+      }
+    ],
+    "SBQQ__ConfigurationAttribute__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__Dimension__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__Cost__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__LookupData__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__DiscountSchedule__C": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__ProductAction__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__ConfigurationRule__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__PriceRule__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__OptionConstraint__c": [
+      {
+        "lookupField": "SBQQ__ConfiguredSKU__c",
+        "relationshipName": "SBQQ__ConfiguredSKU__r",
+        "type": "reference",
+        "label": "Configured SKU"
+      }
+    ],
+    "SBQQ__UpgradeSource__c": [
+      {
+        "lookupField": "SBQQ__SourceProduct__c",
+        "relationshipName": "SBQQ__SourceProduct__r",
+        "type": "reference",
+        "label": "Source Product"
+      },
+      {
+        "lookupField": "SBQQ__UpgradeProduct__c",
+        "relationshipName": "SBQQ__UpgradeProduct__r",
+        "type": "reference",
+        "label": "Upgrade Product"
+      }
+    ],
+    "SBQQ__BlockPrice__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ],
+    "SBQQ__Localization__c": [
+      {
+        "lookupField": "SBQQ__Product__c",
+        "relationshipName": "SBQQ__Product__r",
+        "type": "reference",
+        "label": "Product"
+      }
+    ]
+  },
+  "errors": []
+}

@@ -40,6 +40,41 @@
             });
         },
         
+        exportToExcel: function() {
+            ConfigManager.updateOrgConfig();
+            ConfigManager.updateExcludedObjects();
+            MigrationObjects.update();
+            
+            const mode = State.currentConfig.mode || 'standard';
+            
+            if (!State.currentConfig.sourceOrg.alias && !State.currentConfig.sourceOrg.username) {
+                vscode.postMessage({ command: 'showError', message: 'Error: Source org is required for Excel export' });
+                return;
+            }
+            
+            if (mode !== 'cpq' && mode !== 'rca') {
+                // Standard mode requires at least one object
+                if (!State.currentConfig.objects || State.currentConfig.objects.length === 0) {
+                    vscode.postMessage({ command: 'showError', message: 'Error: At least one object must be added' });
+                    return;
+                }
+            }
+            
+            // Show confirmation modal
+            if (window.SFDMU.Modals) {
+                window.SFDMU.Modals.showExcelExportConfirm();
+            }
+        },
+        
+        proceedWithExcelExport: function(phaseNumber) {
+            // This is called from the modal after user confirms
+            vscode.postMessage({
+                command: 'exportToExcel',
+                config: State.currentConfig,
+                phaseNumber: phaseNumber
+            });
+        },
+        
         simulateMigration: function() {
             ConfigManager.updateOrgConfig();
             ConfigManager.updateExcludedObjects();
@@ -122,12 +157,10 @@
         
         updateGenerateButtonText: function(hasFiles) {
             const generateIcon = document.getElementById('generate-files-icon');
-            if (generateIcon) {
-                if (State.currentConfig.mode === 'cpq') {
-                    generateIcon.title = hasFiles ? 'Regenerate CPQ Phase Files' : 'Generate CPQ Phase Files';
-                } else {
-                    generateIcon.title = hasFiles ? 'Regenerate Migration File' : 'Generate Migration File';
-                }
+            // Skip updating tooltip in CPQ mode since the parent-level button is hidden
+            // (each phase has its own generate button with per-phase generation)
+            if (generateIcon && State.currentConfig.mode !== 'cpq') {
+                generateIcon.title = hasFiles ? 'Regenerate Migration File' : 'Generate Migration File';
             }
             
             const simulateIcon = document.getElementById('simulate-migration-icon');
@@ -162,6 +195,47 @@
                 command: simulation ? 'simulateMigration' : 'runMigration',
                 config: State.currentConfig
             });
+        },
+        
+        createBackup: function() {
+            ConfigManager.updateOrgConfig();
+            ConfigManager.updateExcludedObjects();
+            MigrationObjects.update();
+            
+            if (!State.currentConfig.targetOrg.username || !State.currentConfig.targetOrg.instanceUrl) {
+                vscode.postMessage({ command: 'showError', message: 'Error: Target org is required for backup' });
+                return;
+            }
+            
+            if (!State.currentConfig.configName) {
+                vscode.postMessage({ command: 'showError', message: 'Error: Configuration name is required for backup' });
+                return;
+            }
+            
+            const mode = State.currentConfig.mode || 'standard';
+            
+            // For CPQ/RCA modes, backup requires export.json files to exist
+            // For now, we'll try to backup Phase 1 if it exists, otherwise show an error
+            if (mode === 'cpq' || mode === 'rca') {
+                // For phase-based modes, backup Phase 1 by default
+                // User should generate phase files first
+                vscode.postMessage({
+                    command: 'createBackup',
+                    config: State.currentConfig,
+                    phaseNumber: 1 // Default to Phase 1 for testing
+                });
+            } else {
+                // Standard mode - backup all objects
+                if (!State.currentConfig.objects || State.currentConfig.objects.length === 0) {
+                    vscode.postMessage({ command: 'showError', message: 'Error: At least one object must be added' });
+                    return;
+                }
+                
+                vscode.postMessage({
+                    command: 'createBackup',
+                    config: State.currentConfig
+                });
+            }
         }
     };
 })();

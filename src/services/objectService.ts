@@ -4,6 +4,74 @@ import { ObjectMetadata, FieldMetadata } from '../models/migrationConfig';
 
 const execAsync = promisify(exec);
 
+/**
+ * Product2 lookup metadata for CPQ objects
+ * Maps object names to their Product2 lookup field information
+ * Updated based on audit results from ButterflyMX FullQA org
+ * This allows automatic inclusion of Product2 fields in SOQL queries
+ */
+const CPQ_PRODUCT2_LOOKUPS: { [objectName: string]: { lookupField: string; relationshipName: string } } = {
+  // Objects with standard SBQQ__Product__c lookup
+  'SBQQ__ConfigurationAttribute__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__Dimension__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__Cost__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__LookupData__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__DiscountSchedule__C': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__ProductAction__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__ConfigurationRule__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__PriceRule__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__BlockPrice__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  'SBQQ__Localization__c': {
+    lookupField: 'SBQQ__Product__c',
+    relationshipName: 'SBQQ__Product__r'
+  },
+  // Objects with ConfiguredSKU lookup (also Product2)
+  'SBQQ__ProductFeature__c': {
+    lookupField: 'SBQQ__ConfiguredSKU__c',
+    relationshipName: 'SBQQ__ConfiguredSKU__r'
+  },
+  'SBQQ__ProductOption__c': {
+    lookupField: 'SBQQ__ConfiguredSKU__c', // Primary lookup (also has SBQQ__OptionalSKU__c)
+    relationshipName: 'SBQQ__ConfiguredSKU__r'
+  },
+  'SBQQ__OptionConstraint__c': {
+    lookupField: 'SBQQ__ConfiguredSKU__c',
+    relationshipName: 'SBQQ__ConfiguredSKU__r'
+  },
+  // Objects with multiple Product2 lookups
+  'SBQQ__UpgradeSource__c': {
+    lookupField: 'SBQQ__SourceProduct__c', // Primary lookup (also has SBQQ__UpgradeProduct__c)
+    relationshipName: 'SBQQ__SourceProduct__r'
+  }
+};
+
 interface SFDataQueryResult {
   status?: number;
   result?: {
@@ -453,6 +521,265 @@ export async function getAvailableObjects(
     if (error.stderr) console.error('stderr:', error.stderr);
     
     throw new Error(`Failed to get available objects: ${error.message}`);
+  }
+}
+
+/**
+ * Query master records from source org for CPQ master selection
+ * Returns records with Id and external ID field value
+ */
+/**
+ * Get Product2 lookup fields for an object by querying metadata
+ * Returns array of relationship field names (e.g., ['SBQQ__Product__r'])
+ */
+async function getProduct2LookupFields(
+  objectName: string,
+  orgAlias: string
+): Promise<string[]> {
+  try {
+    // Query FieldDefinition to find lookup fields that reference Product2
+    const query = `SELECT QualifiedApiName, RelationshipName, ReferenceTo FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName = '${objectName}' AND DataType = 'Reference'`;
+    
+    const { stdout, stderr } = await execAsync(
+      `sf data query --query "${query}" --target-org "${orgAlias}" --json`,
+      {
+        maxBuffer: 10 * 1024 * 1024
+      }
+    );
+    
+    const jsonOutput = stdout || stderr;
+    if (!jsonOutput || jsonOutput.trim() === '') {
+      return [];
+    }
+    
+    const result: SFDataQueryResult = JSON.parse(jsonOutput);
+    const records = result.result?.records || result.records || [];
+    
+    const product2Fields: string[] = [];
+    for (const record of records) {
+      const referenceTo = record.ReferenceTo || record.referenceTo || [];
+      // Check if this field references Product2
+      if (Array.isArray(referenceTo) && referenceTo.includes('Product2')) {
+        const relationshipName = record.RelationshipName || record.relationshipName;
+        if (relationshipName) {
+          product2Fields.push(relationshipName);
+        }
+      }
+    }
+    
+    return product2Fields;
+  } catch (error: any) {
+    // If metadata query fails, return empty array (we'll fall back to pattern matching)
+    console.warn(`[getProduct2LookupFields] Failed to query metadata for ${objectName}:`, error.message);
+    return [];
+  }
+}
+
+export async function queryMasterRecords(
+  objectName: string,
+  externalIdField: string,
+  orgAlias: string,
+  filters?: { whereClause?: string },
+  limit?: number,
+  offset?: number
+): Promise<Array<{ Id: string; [key: string]: any }>> {
+  try {
+    // Extract the actual field name from relationship fields
+    // For composite external IDs, use the first field
+    let actualField = externalIdField;
+    if (externalIdField.includes(';')) {
+      // Composite external ID - extract first field
+      actualField = externalIdField.split(';')[0].trim();
+    }
+    
+    // Handle relationship fields (e.g., SBQQ__Rule__r.Name)
+    // For SELECT, we can use the relationship field directly
+    // For WHERE filtering later, we'll need the lookup field
+    let selectField = actualField;
+    if (actualField.includes('__r.')) {
+      // Relationship field - use as is for SELECT (e.g., SBQQ__Rule__r.Name)
+      selectField = actualField;
+    } else if (actualField.includes('.')) {
+      // Standard relationship (e.g., Account.Name) - use as is
+      selectField = actualField;
+    }
+    
+    // Build SOQL query - include LastModifiedDate and LastModifiedBy.Name
+    // For composite external IDs or relationship fields, we need to include all relationship fields
+    let selectFields = [selectField];
+    
+    // If external ID is composite, include all fields
+    if (externalIdField.includes(';')) {
+        const allFields = externalIdField.split(';').map(f => f.trim());
+        selectFields = [...new Set([...selectFields, ...allFields])]; // Remove duplicates
+    }
+    
+    // For composite external IDs, also include the lookup fields themselves (not just the relationship)
+    // This helps with display when relationships are null
+    const lookupFields: string[] = [];
+    
+    // Check for Product2 lookups using two methods:
+    // 1. Check CPQ_PRODUCT2_LOOKUPS metadata for objects with Product2 lookups (highest priority)
+    // 2. Check if external ID contains Product2 relationship (e.g., SBQQ__Product__r)
+    const product2LookupInfo = CPQ_PRODUCT2_LOOKUPS[objectName];
+    const hasProduct2InExternalId = externalIdField.includes('SBQQ__Product__r') || 
+                                     externalIdField.includes('SBQQ__ConfiguredSKU__r') ||
+                                     externalIdField.includes('SBQQ__OptionalSKU__r') ||
+                                     externalIdField.includes('SBQQ__SourceProduct__r') ||
+                                     externalIdField.includes('SBQQ__UpgradeProduct__r');
+    
+    const hasProduct2Lookup = !!product2LookupInfo || hasProduct2InExternalId;
+    
+    if (hasProduct2Lookup) {
+        // Determine which Product2 relationship to use
+        // Priority: 1) Metadata, 2) External ID detection, 3) Default to SBQQ__Product__r
+        let product2RelationshipName = 'SBQQ__Product__r';
+        let product2LookupField = 'SBQQ__Product__c';
+        
+        if (product2LookupInfo) {
+          // Use the relationship from metadata (highest priority)
+          product2RelationshipName = product2LookupInfo.relationshipName;
+          product2LookupField = product2LookupInfo.lookupField;
+        } else if (externalIdField.includes('SBQQ__ConfiguredSKU__r')) {
+          product2RelationshipName = 'SBQQ__ConfiguredSKU__r';
+          product2LookupField = 'SBQQ__ConfiguredSKU__c';
+        } else if (externalIdField.includes('SBQQ__OptionalSKU__r')) {
+          product2RelationshipName = 'SBQQ__OptionalSKU__r';
+          product2LookupField = 'SBQQ__OptionalSKU__c';
+        } else if (externalIdField.includes('SBQQ__SourceProduct__r')) {
+          product2RelationshipName = 'SBQQ__SourceProduct__r';
+          product2LookupField = 'SBQQ__SourceProduct__c';
+        } else if (externalIdField.includes('SBQQ__UpgradeProduct__r')) {
+          product2RelationshipName = 'SBQQ__UpgradeProduct__r';
+          product2LookupField = 'SBQQ__UpgradeProduct__c';
+        } else if (externalIdField.includes('SBQQ__Product__r')) {
+          // Standard Product2 lookup detected in external ID
+          product2RelationshipName = 'SBQQ__Product__r';
+          product2LookupField = 'SBQQ__Product__c';
+        }
+        
+        // Add Product2 Name and ProductCode if not already in selectFields
+        if (!selectFields.includes(`${product2RelationshipName}.Name`)) {
+            selectFields.push(`${product2RelationshipName}.Name`);
+        }
+        if (!selectFields.includes(`${product2RelationshipName}.ProductCode`)) {
+            selectFields.push(`${product2RelationshipName}.ProductCode`);
+        }
+        // Also add the lookup field
+        if (!lookupFields.includes(product2LookupField)) {
+            lookupFields.push(product2LookupField);
+        }
+    }
+    
+    if (externalIdField.includes(';')) {
+        const allFields = externalIdField.split(';').map(f => f.trim());
+        allFields.forEach(field => {
+            if (field.includes('__r.')) {
+                const relationshipName = field.split('__r.')[0];
+                // Extract lookup field (e.g., SBQQ__PriceBook__r.Name -> SBQQ__PriceBook__c)
+                const lookupField = relationshipName + '__c';
+                if (!selectFields.includes(lookupField) && !lookupFields.includes(lookupField)) {
+                    lookupFields.push(lookupField);
+                }
+            }
+        });
+    } else if (externalIdField.includes('__r.')) {
+        const relationshipName = externalIdField.split('__r.')[0];
+        // Single relationship field - also include the lookup field
+        const lookupField = relationshipName + '__c';
+        if (!selectFields.includes(lookupField)) {
+            lookupFields.push(lookupField);
+        }
+    }
+    
+    // Also try to include Name field if it exists (for better display)
+    // Note: We'll include it and let SOQL fail gracefully if it doesn't exist
+    // Check if 'Name' (the object's own Name field) is already in selectFields
+    // We want to add it if it's not already there (don't check externalIdField for 'Name' 
+    // because that might be a relationship field like SBQQ__PriceBook__r.Name)
+    const allSelectFields = [...selectFields, ...lookupFields];
+    const hasObjectNameField = allSelectFields.some(f => f === 'Name' || f.trim() === 'Name');
+    if (!hasObjectNameField) {
+        allSelectFields.push('Name');
+    }
+    
+    // Build SELECT clause with all needed fields
+    // Remove duplicates and ensure proper ordering
+    const uniqueSelectFields = [...new Set(allSelectFields)];
+    // Ensure Id is always first in the SELECT clause (required for deduplication and record identification)
+    const selectFieldsList = uniqueSelectFields.filter(f => f !== 'Id' && f.trim() !== 'Id');
+    const selectClause = `Id, ${selectFieldsList.join(', ')}, LastModifiedDate, LastModifiedBy.Name`;
+    let query = `SELECT ${selectClause} FROM ${objectName}`;
+    
+    // Add WHERE clause if provided
+    const conditions: string[] = [];
+    if (filters?.whereClause) {
+      conditions.push(filters.whereClause);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    // Add ORDER BY LastModifiedDate DESC, Id ASC for stable pagination
+    // Using Id as secondary sort ensures consistent ordering when LastModifiedDate values are the same
+    query += ' ORDER BY LastModifiedDate DESC, Id ASC';
+    
+    // Add LIMIT and OFFSET for pagination
+    if (limit) {
+      query += ` LIMIT ${limit}`;
+    }
+    if (offset && offset > 0) {
+      query += ` OFFSET ${offset}`;
+    }
+    
+    // Execute query
+    const { stdout, stderr } = await execAsync(
+      `sf data query --query "${query}" --target-org "${orgAlias}" --json`,
+      {
+        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+      }
+    );
+    
+    const jsonOutput = stdout || stderr;
+    if (!jsonOutput || jsonOutput.trim() === '') {
+      return [];
+    }
+    
+    const result: SFDataQueryResult = JSON.parse(jsonOutput);
+    
+    // Extract records from response
+    let records: any[] = [];
+    if (result.result?.records) {
+      records = result.result.records;
+    } else if (result.records) {
+      records = result.records;
+    } else if (Array.isArray(result.result)) {
+      records = result.result;
+    }
+    
+    return records;
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw new Error('Salesforce CLI (sf) is not installed or not in PATH');
+    }
+    
+    // Extract error message from Salesforce response
+    let errorMessage = error.message;
+    if (error.stdout) {
+      try {
+        const errorData = JSON.parse(error.stdout);
+        if (errorData.result?.errors && errorData.result.errors.length > 0) {
+          errorMessage = errorData.result.errors[0].message || errorData.result.errors[0].errorCode || errorMessage;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        // If parsing fails, use original message
+      }
+    }
+    
+    throw new Error(`Failed to query master records: ${errorMessage}`);
   }
 }
 

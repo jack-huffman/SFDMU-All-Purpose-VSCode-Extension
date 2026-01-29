@@ -273,9 +273,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Start a new configuration under the selected folder (using the webview logic)
-  const createConfigInFolderDisposable = vscode.commands.registerCommand(
-    'sfdmu-all-purpose.createConfigInFolder',
+  // Start a new standard configuration under the selected folder
+  const createStandardConfigInFolderDisposable = vscode.commands.registerCommand(
+    'sfdmu-all-purpose.createStandardConfigInFolder',
     async (item: ConfigTreeItem) => {
       if (!workspaceFolder) {
         vscode.window.showErrorMessage('No workspace folder is open.');
@@ -287,7 +287,43 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       const panel = MigrationPanel.createOrShow(context.extensionUri);
-      panel.startNewConfigInFolder(item.item.path);
+      panel.startNewConfigInFolder(item.item.path, 'standard');
+    }
+  );
+
+  // Start a new CPQ configuration under the selected folder
+  const createCpqConfigInFolderDisposable = vscode.commands.registerCommand(
+    'sfdmu-all-purpose.createCpqConfigInFolder',
+    async (item: ConfigTreeItem) => {
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage('No workspace folder is open.');
+        return;
+      }
+
+      if (!item || item.item.type !== 'folder') {
+        return;
+      }
+
+      const panel = MigrationPanel.createOrShow(context.extensionUri);
+      panel.startNewConfigInFolder(item.item.path, 'cpq');
+    }
+  );
+
+  // Start a new RCA configuration under the selected folder
+  const createRcaConfigInFolderDisposable = vscode.commands.registerCommand(
+    'sfdmu-all-purpose.createRcaConfigInFolder',
+    async (item: ConfigTreeItem) => {
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage('No workspace folder is open.');
+        return;
+      }
+
+      if (!item || item.item.type !== 'folder') {
+        return;
+      }
+
+      const panel = MigrationPanel.createOrShow(context.extensionUri);
+      panel.startNewConfigInFolder(item.item.path, 'rca');
     }
   );
 
@@ -463,6 +499,19 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Register command to confirm migration completion
+  const confirmMigrationCompleteDisposable = vscode.commands.registerCommand(
+    'sfdmu-all-purpose.confirmMigrationComplete',
+    async () => {
+      const panel = MigrationPanel.currentPanel;
+      if (panel) {
+        await panel.handleMigrationCompletion();
+      } else {
+        vscode.window.showInformationMessage('No migration panel is open.');
+      }
+    }
+  );
+
   context.subscriptions.push(
     treeView,
     openPanelDisposable,
@@ -470,10 +519,16 @@ export function activate(context: vscode.ExtensionContext) {
     refreshTreeDisposable,
     createFolderDisposable,
     deleteFolderDisposable,
+    createStandardConfigInFolderDisposable,
+    createCpqConfigInFolderDisposable,
+    createRcaConfigInFolderDisposable,
     deleteConfigDisposable,
-    createConfigInFolderDisposable,
+    createStandardConfigInFolderDisposable,
+    createCpqConfigInFolderDisposable,
+    createRcaConfigInFolderDisposable,
     renameConfigFileDisposable,
-    renameConfigFolderDisposable
+    renameConfigFolderDisposable,
+    confirmMigrationCompleteDisposable
   );
 
   // Reveal tree view when extension activates (with a delay to ensure tree is ready)
