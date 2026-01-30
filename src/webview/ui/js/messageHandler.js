@@ -255,8 +255,15 @@
                                 window.SFDMU.ConfigManager.updateOrgConfig();
                             }
                             const sourceOrgSelect = document.getElementById('source-org-select');
-                            if (sourceOrgSelect.value) {
+                            if (sourceOrgSelect && sourceOrgSelect.value) {
                                 State.currentConfig.sourceOrg.alias = sourceOrgSelect.value;
+                            }
+                            // Refresh phase button states so Select Master Records etc. enable immediately
+                            if (window.SFDMU.Cpq && window.SFDMU.Cpq.updatePhaseButtonStates) {
+                                window.SFDMU.Cpq.updatePhaseButtonStates();
+                            }
+                            if (window.SFDMU.Rca && window.SFDMU.Rca.updatePhaseButtonStates) {
+                                window.SFDMU.Rca.updatePhaseButtonStates();
                             }
                         } else {
                             document.getElementById('target-org-username').value = message.org.username;

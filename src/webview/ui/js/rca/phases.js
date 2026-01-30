@@ -639,6 +639,38 @@
     };
 
     /**
+     * Update button states for the visible phase (enable/disable based on org config)
+     * Call this when source org is set so Select Master Records and related buttons become active.
+     */
+    window.SFDMU.Rca.updatePhaseButtonStates = function() {
+        const completedPhases = State.currentConfig.rcaCompletedPhases || [];
+        const hasSourceOrg = !!(State.currentConfig.sourceOrg?.username && State.currentConfig.sourceOrg?.instanceUrl);
+        const hasSourceOrgAlias = !!(State.currentConfig.sourceOrg?.alias || State.currentConfig.sourceOrg?.username);
+
+        const contentContainer = document.getElementById('rca-individual-phases');
+        if (!contentContainer) return;
+
+        const activeTab = document.querySelector('.rca-phase-tab.active');
+        const activePhaseNum = activeTab && activeTab.dataset.phaseNumber !== 'metadata' ? parseInt(activeTab.dataset.phaseNumber, 10) : null;
+        const isCompleted = activePhaseNum !== null && !isNaN(activePhaseNum) && completedPhases.includes(activePhaseNum);
+
+        const selectBtn = contentContainer.querySelector('.rca-phase-action-btn');
+        if (selectBtn) {
+            selectBtn.disabled = !hasSourceOrg || isCompleted;
+        }
+
+        const generateBtn = contentContainer.querySelector('.rca-phase-header-btn[title="Generate Phase File"]');
+        if (generateBtn) {
+            generateBtn.disabled = isCompleted || !hasSourceOrg;
+        }
+
+        const exportExcelBtn = contentContainer.querySelector('.rca-phase-header-btn[title="Export to Excel"]');
+        if (exportExcelBtn) {
+            exportExcelBtn.disabled = !hasSourceOrgAlias;
+        }
+    };
+
+    /**
      * Toggle phase completion status
      */
     window.SFDMU.Rca.togglePhaseComplete = function(phaseNumber, isComplete) {

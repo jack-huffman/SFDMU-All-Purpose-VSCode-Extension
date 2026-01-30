@@ -36,6 +36,7 @@ const CPQ_PRODUCT2_LOOKUPS: { [objectName: string]: { lookupField: string; relat
     lookupField: 'SBQQ__Product__c',
     relationshipName: 'SBQQ__Product__r'
   },
+  // ConfigurationRule has three CPQ lookups: Product__c (Product2), ProductFeature__c, ProductRule__c; external ID includes all three
   'SBQQ__ConfigurationRule__c': {
     lookupField: 'SBQQ__Product__c',
     relationshipName: 'SBQQ__Product__r'

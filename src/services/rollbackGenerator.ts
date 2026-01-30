@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { BackupMetadata, RollbackConfig, RollbackObject, DMLOperation, OrgConfig } from '../models/migrationConfig';
-import { loadBackupMetadata } from './backupService';
+import { loadBackupMetadata, getFieldsFromCSV } from './backupService';
 
 /**
  * Generate rollback configuration from backup directory
@@ -231,7 +231,6 @@ export async function generateRollbackQuery(
       // We need to include all fields that will be updated
       if (backupFile) {
         // Read backup CSV to get field list
-        const { getFieldsFromCSV } = await import('./backupService');
         const fields = await getFieldsFromCSV(backupFile);
         if (fields.length > 0) {
           return `SELECT ${fields.join(', ')} FROM ${objectName}`;
@@ -244,7 +243,6 @@ export async function generateRollbackQuery(
       // For Insert operations, we use the backup CSV file directly
       // The query is used to structure the data, but all values come from CSV
       if (backupFile) {
-        const { getFieldsFromCSV } = await import('./backupService');
         const fields = await getFieldsFromCSV(backupFile);
         if (fields.length > 0) {
           return `SELECT ${fields.join(', ')} FROM ${objectName}`;

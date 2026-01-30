@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { FileSystemItem, getConfigTree, getConfigDir } from '../utils/fileUtils';
+import { FileSystemItem, getConfigTree, getConfigDir, moveConfiguration } from '../utils/fileUtils';
 
 export class ConfigTreeItem extends vscode.TreeItem {
   constructor(
@@ -170,9 +170,6 @@ export class ConfigDragAndDropController implements vscode.TreeDragAndDropContro
       }
     }
     // If target is undefined, we're dropping at root (targetFolderPath remains empty)
-
-    // Import moveConfiguration here to avoid circular dependency
-    const { moveConfiguration } = await import('../utils/fileUtils');
 
     // Move each dragged item
     const movePromises: Promise<void>[] = [];

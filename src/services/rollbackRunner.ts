@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { RollbackConfig, SFDMUResult } from '../models/migrationConfig';
 import { runSFDMU } from './sfdmuRunner';
+import { getFieldsFromCSV } from './backupService';
 
 /**
  * Clean and validate CSV file to fix common issues that SFDMU complains about
@@ -208,7 +209,6 @@ export async function generateRollbackExportJson(
         
         // Check if CSV file has Id column
         // According to SFDMU docs: if CSV doesn't have Id column, need excludeIdsFromCSVFiles: true
-        const { getFieldsFromCSV } = await import('./backupService');
         const csvFields = await getFieldsFromCSV(obj.backupFile);
         const hasIdColumn = csvFields.includes('Id');
         

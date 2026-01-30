@@ -39,6 +39,12 @@ export const CPQ_COMPREHENSIVE_RELATIONSHIPS: {
       relationshipField: 'SBQQ__ProductRule__c',
       externalId: 'Name',
       phaseNumber: 2
+    },
+    {
+      childObjectName: 'SBQQ__ConfigurationRule__c',
+      relationshipField: 'SBQQ__ProductRule__c',
+      externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
+      phaseNumber: 2
     }
   ],
   // Phase 3: PriceRule children
@@ -144,11 +150,17 @@ const PHASE_DEFINITIONS: PhaseConfig[] = [
   },
   {
     phaseNumber: 2,
-    objects: ['SBQQ__ProductRule__c', 'SBQQ__ErrorCondition__c', 'SBQQ__LookupQuery__c', 'SBQQ__ProductAction__c'],
+    objects: [
+      'SBQQ__ProductRule__c',
+      'SBQQ__ErrorCondition__c',
+      'SBQQ__LookupQuery__c',
+      'SBQQ__ProductAction__c',
+      'SBQQ__ConfigurationRule__c'
+    ],
     description:
-      'Phase 2: Product Rules - Product rules with their child objects (Error Conditions, Lookup Queries, Product Actions)',
+      'Phase 2: Product Rules - Product rules with their child objects (Error Conditions, Lookup Queries, Product Actions, Configuration Rules)',
     comment:
-      'Product Rule is migrated first, followed by its child objects. ErrorCondition, LookupQuery (for Product Rule), and ProductAction have Master-Detail relationships to ProductRule.'
+      'Product Rule is migrated first, followed by its child objects. ErrorCondition, LookupQuery (for Product Rule), ProductAction, and ConfigurationRule have relationships to ProductRule.'
   },
   {
     phaseNumber: 3,
@@ -248,7 +260,8 @@ export function isSlaveObject(objectName: string, phaseNumber: number): boolean 
   if (phaseNumber === 2) {
     return [
       'SBQQ__ErrorCondition__c',
-      'SBQQ__ProductAction__c'
+      'SBQQ__ProductAction__c',
+      'SBQQ__ConfigurationRule__c'
     ].includes(objectName);
     // Note: SBQQ__LookupQuery__c can be slave in Phase 2 OR Phase 3, handled separately
   }
@@ -363,11 +376,15 @@ export function getPhaseAndExternalId(
     return null;
   }
 
-  // Phase 2: Product Rules
+  // Phase 2: Product Rules (includes ConfigurationRule as child of ProductRule)
   if (
-    ['SBQQ__ProductRule__c', 'SBQQ__ErrorCondition__c', 'SBQQ__LookupQuery__c', 'SBQQ__ProductAction__c'].includes(
-      objectName
-    )
+    [
+      'SBQQ__ProductRule__c',
+      'SBQQ__ErrorCondition__c',
+      'SBQQ__LookupQuery__c',
+      'SBQQ__ProductAction__c',
+      'SBQQ__ConfigurationRule__c'
+    ].includes(objectName)
   ) {
     const phaseNum = 2;
     switch (objectName) {
@@ -386,6 +403,15 @@ export function getPhaseAndExternalId(
           phaseNumber: phaseNum,
           externalId: 'SBQQ__Rule__r.Name;SBQQ__Product__r.ProductCode'
         };
+      case 'SBQQ__ConfigurationRule__c':
+        // ConfigurationRule is child of ProductRule in Phase 2; also selectable in Phase 3
+        if (phaseNumber === 2) {
+          return {
+            phaseNumber: phaseNum,
+            externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name'
+          };
+        }
+        break;
     }
   }
 
@@ -404,7 +430,7 @@ export function getPhaseAndExternalId(
       case 'SBQQ__ConfigurationRule__c':
         return {
           phaseNumber: phaseNum,
-          externalId: 'SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name'
+          externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name'
         };
       case 'SBQQ__PriceRule__c':
         return { phaseNumber: phaseNum, externalId: 'Name' };

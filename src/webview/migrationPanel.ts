@@ -17,10 +17,11 @@ import {
   queryMasterRecords,
   getObjectMetadata,
 } from '../services/objectService';
-import { createPreMigrationBackup, createPostMigrationBackup, listAvailableBackups } from '../services/backupService';
+import { createPreMigrationBackup, createPostMigrationBackup, listAvailableBackups, loadBackupMetadata } from '../services/backupService';
 import { saveMigrationHistory } from '../services/migrationHistoryService';
 import { generateRollbackConfig } from '../services/rollbackGenerator';
-import { executeRollback } from '../services/rollbackRunner';
+import { executeRollback, generateRollbackExportJson } from '../services/rollbackRunner';
+import { exportToExcel } from '../services/excelExportService';
 import {
   saveConfiguration,
   loadConfiguration,
@@ -1167,9 +1168,6 @@ export class MigrationPanel {
                 this.sendOutput(`Phase: ${phaseNumber}`, 'info');
             }
             this.sendOutput('='.repeat(60), 'info');
-
-            // Import the export service
-            const { exportToExcel } = await import('../services/excelExportService');
 
             // Progress callback
             const progressCallback = (message: string, objectName?: string, progress?: number) => {
@@ -2397,8 +2395,6 @@ export class MigrationPanel {
                 return;
             }
 
-            // Load backup metadata
-            const { loadBackupMetadata } = await import('../services/backupService');
             const metadata = await loadBackupMetadata(backupDir);
 
             // Generate rollback config
@@ -2408,8 +2404,6 @@ export class MigrationPanel {
                 metadata.sourceOrg  // Source becomes target for rollback
             );
 
-            // Generate rollback export.json
-            const { generateRollbackExportJson } = await import('../services/rollbackRunner');
             const rollbackOutputDir = await generateRollbackExportJson(rollbackConfig);
 
             // Display rollback simulation information
@@ -2470,19 +2464,14 @@ export class MigrationPanel {
                 return;
             }
 
-            // Load backup metadata
-            const { loadBackupMetadata } = await import('../services/backupService');
             const metadata = await loadBackupMetadata(backupDir);
 
-            // Generate rollback config
             const rollbackConfig = await generateRollbackConfig(
                 backupDir,
                 metadata.targetOrg, // Target becomes source for rollback
                 metadata.sourceOrg  // Source becomes target for rollback
             );
 
-            // Generate rollback export.json (this creates the rollback directory and export.json)
-            const { generateRollbackExportJson } = await import('../services/rollbackRunner');
             const rollbackOutputDir = await generateRollbackExportJson(rollbackConfig);
 
             // Display rollback information

@@ -293,10 +293,12 @@
                 const uniqueKey = childRecord.Id ?? displayId;
                 if (uniqueKey && !addedKeys.has(uniqueKey)) {
                     addedKeys.add(uniqueKey);
+                    if (displayId) addedKeys.add(displayId);
                     childRecords.push({ record: childRecord, externalId: displayId, isQueried: true });
                 }
             });
             childSelectedIds.forEach(childExternalIdValue => {
+                if (childExternalIdValue == null || String(childExternalIdValue).trim() === '') return;
                 if (addedKeys.has(childExternalIdValue)) return;
                 let isMatch = false;
                 if (phaseNumber === 3 && parentObjectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {
@@ -305,6 +307,11 @@
                     const templateName = (parentExternalId.split('|')[0] || parentExternalId).trim().toLowerCase();
                     const childTemplateName = (childExternalIdValue.split('|')[0] || childExternalIdValue).trim().toLowerCase();
                     isMatch = templateName === childTemplateName;
+                } else if (phaseNumber === 2 && parentObjectName === 'SBQQ__ProductRule__c' && childObjectName === 'SBQQ__ConfigurationRule__c') {
+                    // ConfigurationRule externalId is ProductCode|ProductFeatureName|ProductRuleName - match only when ProductRule (last) part equals parent
+                    const childParts = (childExternalIdValue || '').split('|').map(p => p.trim());
+                    const productRulePart = childParts.length > 0 ? childParts[childParts.length - 1] : '';
+                    isMatch = (productRulePart || '').toLowerCase() === (parentExternalId || '').trim().toLowerCase();
                 } else {
                     const parentParts = parentExternalId.split('|');
                     const childParts = childExternalIdValue.split('|');
@@ -354,11 +361,11 @@
         const sortedObjectTypes = Object.keys(children).sort();
         
         sortedObjectTypes.forEach(childObjectName => {
-            const childRecords = children[childObjectName] || [];
+            const rawRecords = children[childObjectName] || [];
+            const childRecords = rawRecords.filter(item =>
+                item.record?.Id || (item.externalId != null && String(item.externalId).trim() !== '')
+            );
             if (childRecords.length === 0) return;
-            
-            const childConfig = allChildConfigs.find(c => (c.childObjectName || c.objectName) === childObjectName);
-            const childExternalId = childConfig ? (childConfig.externalId || childConfig.childExternalId) : '';
             
             const objectTypeHeader = document.createElement('div');
             objectTypeHeader.className = 'cpq-children-modal-object-header';
@@ -381,27 +388,22 @@
             childRecords.forEach(item => {
                 const childItem = document.createElement('div');
                 childItem.className = 'cpq-children-modal-item';
+                // Prefer Name field; fall back to SBQQ__Name__c, then Id, then externalId
                 let childDisplayName = '';
                 if (item.record) {
-                    if (item.record.Name) {
-                        childDisplayName = item.record.Name;
-                    } else if (item.record.SBQQ__Name__c) {
-                        childDisplayName = item.record.SBQQ__Name__c;
-                    } else {
-                        childDisplayName = buildExternalIdFromRecord(item.record, childExternalId);
+                    childDisplayName = item.record.Name || '';
+                    if (!childDisplayName && item.record.Id) {
+                        childDisplayName = 'Record ' + item.record.Id.slice(-8);
                     }
-                } else {
+                }
+                if (!childDisplayName) {
                     childDisplayName = item.externalId || 'Unnamed Record';
                 }
-                // If display name is the parent's name (e.g. from relationship field like SBQQ__Rule__r.Name), show child identity instead
+                // If display equals parent name (e.g. child Name is the rule name), show Id instead to avoid confusion
                 const parentNameNorm = (parentExternalId || '').trim().toLowerCase();
                 const displayNorm = (childDisplayName || '').trim().toLowerCase();
-                if (parentNameNorm && displayNorm === parentNameNorm) {
-                    if (item.record && item.record.Id) {
-                        childDisplayName = 'Record ' + item.record.Id.slice(-8);
-                    } else {
-                        childDisplayName = 'Unnamed Record';
-                    }
+                if (parentNameNorm && displayNorm === parentNameNorm && item.record?.Id) {
+                    childDisplayName = 'Record ' + item.record.Id.slice(-8);
                 }
                 const childName = document.createElement('span');
                 childName.className = 'cpq-children-modal-item-name';
@@ -1259,10 +1261,12 @@
                         const uniqueKey = childRecord.Id ?? childRecordExternalId;
                         if (uniqueKey && !addedKeys.has(uniqueKey)) {
                             addedKeys.add(uniqueKey);
+                            if (childRecordExternalId) addedKeys.add(childRecordExternalId);
                             childRecords.push({ record: childRecord, externalId: childRecordExternalId, isQueried: true });
                         }
                     });
                     childSelectedIds.forEach(childExternalIdValue => {
+                        if (childExternalIdValue == null || String(childExternalIdValue).trim() === '') return;
                         if (addedKeys.has(childExternalIdValue)) return;
                         let isMatch = false;
                         if (phase.phaseNumber === 3 && objectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {
@@ -1349,10 +1353,12 @@
                         const uniqueKey = childRecord.Id ?? childRecordExternalId;
                         if (uniqueKey && !addedKeys.has(uniqueKey)) {
                             addedKeys.add(uniqueKey);
+                            if (childRecordExternalId) addedKeys.add(childRecordExternalId);
                             childRecords.push({ record: childRecord, externalId: childRecordExternalId, isQueried: true });
                         }
                     });
                     childSelectedIds.forEach(childExternalIdValue => {
+                        if (childExternalIdValue == null || String(childExternalIdValue).trim() === '') return;
                         if (addedKeys.has(childExternalIdValue)) return;
                         let isMatch = false;
                         if (phase.phaseNumber === 3 && objectName === 'SBQQ__PriceRule__c' && childObjectName === 'SBQQ__LookupQuery__c') {

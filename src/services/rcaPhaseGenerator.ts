@@ -176,9 +176,10 @@ const PHASE_DEFINITIONS: PhaseConfig[] = [
   }
 ];
 
-// Load RCA configuration from JSON file (bundled in webview/ui/js/rca/)
+// Load RCA configuration from JSON file (copied to out/webview/ui/js/rca/ by copy-webview)
+// Extension is bundled to out/extension.js, so __dirname is out/
 async function loadRcaConfig(): Promise<RcaConfigFile> {
-  const configPath = path.join(__dirname, '../webview/ui/js/rca/rca-complete-config.json');
+  const configPath = path.join(__dirname, 'webview/ui/js/rca/rca-complete-config.json');
   const content = await fs.readFile(configPath, 'utf8');
   return JSON.parse(content) as RcaConfigFile;
 }

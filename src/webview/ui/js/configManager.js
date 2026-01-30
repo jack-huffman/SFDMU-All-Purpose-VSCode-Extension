@@ -366,11 +366,14 @@
                 };
             });
             
-            // Update CPQ phase button states if in CPQ mode
+            // Update phase button states so Select Master Records etc. enable when source org is set
             if (State.currentConfig.mode === 'cpq' && window.SFDMU.Cpq && window.SFDMU.Cpq.updatePhaseButtonStates) {
                 window.SFDMU.Cpq.updatePhaseButtonStates();
             }
-            
+            if (State.currentConfig.mode === 'rca' && window.SFDMU.Rca && window.SFDMU.Rca.updatePhaseButtonStates) {
+                window.SFDMU.Rca.updatePhaseButtonStates();
+            }
+
             // Check for config changes after updating orgs
             if (!State.isCheckingConfigChanges && window.SFDMU.ConfigChangeChecker) {
                 window.SFDMU.ConfigChangeChecker.check();

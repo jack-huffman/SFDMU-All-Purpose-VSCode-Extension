@@ -39,7 +39,7 @@ const masterExternalIds = {
   'SBQQ__ProductRule__c': 'Name',
   
   // Phase 3
-  'SBQQ__ConfigurationRule__c': 'SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
+  'SBQQ__ConfigurationRule__c': 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
   'SBQQ__PriceRule__c': 'Name',
   
   // Phase 4

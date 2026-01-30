@@ -2,7 +2,7 @@
   "name": "sfdmu-all-purpose-migration",
   "displayName": "SFDMU All-Purpose Migration Utility",
   "description": "Visual interface for configuring and executing SFDMU scripts to migrate objects, CPQ data, or RCA data between Salesforce orgs",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "JackHuffman",
   "icon": "icon.png",
   "repository": {
@@ -16,9 +16,6 @@
     "Other"
   ],
   "main": "./out/extension.js",
-  "activationEvents": [
-    "onView:sfdmuMigration"
-  ],
   "contributes": {
     "commands": [
       {
@@ -152,7 +149,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run copy-webview",
+    "compile": "npm run bundle && npm run copy-webview",
+    "bundle": "node scripts/bundle.js",
     "copy-webview": "node scripts/copy-webview.js",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
@@ -162,6 +160,7 @@
     "@types/fs-extra": "^11.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
+    "esbuild": "^0.27.2",
     "typescript": "^5.0.0"
   },
   "dependencies": {

@@ -264,7 +264,7 @@
         return { externalId: 'Name' };
     }
     if (objectName === 'SBQQ__ConfigurationRule__c') {
-        return { externalId: 'SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name' };
+        return { externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name' };
     }
     if (objectName === 'SBQQ__PriceCondition__c') {
         return { externalId: 'SBQQ__Rule__r.Name;SBQQ__Index__c' };

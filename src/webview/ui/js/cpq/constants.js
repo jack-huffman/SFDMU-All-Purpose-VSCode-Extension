@@ -36,7 +36,7 @@
             autoExpandOnSelect: true
         }
     },
-    // Phase 2: ProductRule → ErrorCondition, ProductAction, LookupQuery
+    // Phase 2: ProductRule → ErrorCondition, ProductAction, LookupQuery, ConfigurationRule
     2: {
         'SBQQ__ProductRule__c': {
             childObjects: [
@@ -54,6 +54,11 @@
                     objectName: 'SBQQ__LookupQuery__c',
                     relationshipField: 'SBQQ__ProductRule__c', // This one is correct - LookupQuery uses SBQQ__ProductRule__c
                     externalId: 'Name'
+                },
+                {
+                    objectName: 'SBQQ__ConfigurationRule__c',
+                    relationshipField: 'SBQQ__ProductRule__c',
+                    externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name'
                 }
             ],
             autoExpandOnSelect: true
@@ -153,6 +158,12 @@
                 childObjectName: 'SBQQ__LookupQuery__c',
                 relationshipField: 'SBQQ__ProductRule__c',
                 externalId: 'Name',
+                phaseNumber: 2
+            },
+            {
+                childObjectName: 'SBQQ__ConfigurationRule__c',
+                relationshipField: 'SBQQ__ProductRule__c',
+                externalId: 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
                 phaseNumber: 2
             }
         ],

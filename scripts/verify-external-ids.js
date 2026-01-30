@@ -31,7 +31,7 @@ const externalIds = {
   'SBQQ__LookupQuery__c': 'Name', // Phase 2 - ProductRule
   
   // Phase 3
-  'SBQQ__ConfigurationRule__c': 'SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
+  'SBQQ__ConfigurationRule__c': 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name',
   'SBQQ__PriceRule__c': 'Name',
   'SBQQ__PriceCondition__c': 'SBQQ__Rule__r.Name;SBQQ__Index__c',
   'SBQQ__PriceAction__c': 'SBQQ__Rule__r.Name',

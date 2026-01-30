@@ -401,7 +401,7 @@ function getCpqExternalId(objectName: string, includeProduct2: boolean): string 
   if (objectName === 'SBQQ__ProductAction__c') return 'SBQQ__Rule__r.Name;SBQQ__Product__r.ProductCode';
 
   // Phase 3
-  if (objectName === 'SBQQ__ConfigurationRule__c') return 'SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name';
+  if (objectName === 'SBQQ__ConfigurationRule__c') return 'SBQQ__Product__r.ProductCode;SBQQ__ProductFeature__r.Name;SBQQ__ProductRule__r.Name';
   if (objectName === 'SBQQ__PriceRule__c') return 'Name';
   if (objectName === 'SBQQ__PriceCondition__c') return 'SBQQ__Rule__r.Name;SBQQ__Index__c';
   if (objectName === 'SBQQ__PriceAction__c') return 'SBQQ__Rule__r.Name';
